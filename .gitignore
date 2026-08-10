@@ -1,0 +1,40 @@
+# Dependencies & build
+node_modules
+dist
+dist-ssr
+*.local
+src-tauri/target
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Editor
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Secrets / local overrides (never commit)
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+gateway-api-key
+cursor_accounts.json
+
+# OS
+Thumbs.db
+.AppleDouble
+.LSOverride
