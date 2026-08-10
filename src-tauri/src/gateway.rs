@@ -150,13 +150,13 @@ fn wait_until_healthy(timeout: Duration) -> bool {
     false
 }
 
-fn codex_config_path() -> PathBuf {
+pub(crate) fn codex_config_path() -> PathBuf {
     dirs::home_dir()
         .unwrap_or_default()
         .join(".codex/config.toml")
 }
 
-fn catalog_path_from_config(doc: &toml::Value) -> PathBuf {
+pub(crate) fn catalog_path_from_config(doc: &toml::Value) -> PathBuf {
     doc.get("model_catalog_json")
         .and_then(|v| v.as_str())
         .map(PathBuf::from)
@@ -167,7 +167,7 @@ fn catalog_path_from_config(doc: &toml::Value) -> PathBuf {
         })
 }
 
-fn backup_file(path: &Path) -> Result<PathBuf, String> {
+pub(crate) fn backup_file(path: &Path) -> Result<PathBuf, String> {
     if !path.exists() {
         return Err(format!("cannot backup missing file: {}", path.display()));
     }

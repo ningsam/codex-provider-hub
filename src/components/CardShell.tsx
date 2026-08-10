@@ -4,6 +4,8 @@ import { formatRelativeRefresh } from "../lib/format";
 export function CardShell({
   title,
   subtitle,
+  index,
+  titleBadge,
   refreshedAt,
   onRefresh,
   refreshing,
@@ -13,6 +15,10 @@ export function CardShell({
 }: {
   title: string;
   subtitle?: string;
+  /** Optional cine-style section index, e.g. "01" */
+  index?: string;
+  /** Optional status chip rendered beside the title */
+  titleBadge?: ReactNode;
   refreshedAt?: string | null;
   onRefresh?: () => void;
   refreshing?: boolean;
@@ -23,8 +29,12 @@ export function CardShell({
   return (
     <section className={`dash-card ${className}`.trim()}>
       <header className="card-head">
-        <div>
-          <h2>{title}</h2>
+        <div className="card-head-copy">
+          {index ? <p className="card-index">{index}</p> : null}
+          <div className="card-title-row">
+            <h2>{title}</h2>
+            {titleBadge}
+          </div>
           {subtitle ? <p className="card-sub">{subtitle}</p> : null}
         </div>
         <div className="card-head-actions">

@@ -43,6 +43,7 @@ export function GatewayCard() {
 
   return (
     <CardShell
+      index="01"
       title="本地网关"
       subtitle="127.0.0.1:18080 · Docker Sub2API"
       refreshedAt={status?.lastCheckedAt}

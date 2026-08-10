@@ -28,11 +28,26 @@ export interface QuotaWindow {
   resetAfterSeconds: number;
 }
 
+/** One real OpenAI/Codex OAuth account (not apikey 中转站). */
+export interface Sub2ApiAccountQuota {
+  id: number;
+  name: string;
+  email: string;
+  /** ready | error | inactive | … */
+  status: string;
+  errorMessage: string;
+  fiveHour: QuotaWindow | null;
+  sevenDay: QuotaWindow | null;
+  schedulable: boolean;
+}
+
 export interface Sub2ApiUsage {
   fiveHour: QuotaWindow;
   sevenDay: QuotaWindow;
+  /** OAuth only — excludes AIHub/AnyRouter apikey relays */
   poolTotal: number;
   poolAvailable: number;
+  accounts: Sub2ApiAccountQuota[];
   fetchedAt: string;
 }
 
@@ -41,6 +56,9 @@ export interface AihubBalance {
   used: number;
   currency: string;
   fetchedAt: string;
+  /** Which credential source produced this snapshot */
+  keySource: string;
+  hasStoredKey: boolean;
 }
 
 export interface CursorAccount {
@@ -61,4 +79,38 @@ export interface CursorUsage {
   apiPercent: number;
   totalPercent: number;
   fetchedAt: string;
+}
+
+export interface ProviderInfo {
+  id: number;
+  name: string;
+  baseUrl: string;
+  baseUrlMasked: string;
+  prefix: string;
+  status: string;
+  modelCount: number;
+  hasApiKey: boolean;
+  schedulable: boolean;
+  errorMessage: string;
+}
+
+export interface ProviderMutationResult {
+  provider: ProviderInfo;
+  modelsSynced: number;
+  modelIds: string[];
+  allowlistUpdated: boolean;
+  restartRequired: boolean;
+  hint?: string | null;
+}
+
+export interface PickerGuardStatus {
+  enabled: boolean;
+  useHiddenModels: boolean | null;
+  patchedAt: string | null;
+  chatgptRunning: boolean;
+  /** ChatGPT main process cmdline includes Statsig --host-rules */
+  hostRulesActive: boolean;
+  leveldbPath: string;
+  lastError: string | null;
+  pendingFix: boolean;
 }

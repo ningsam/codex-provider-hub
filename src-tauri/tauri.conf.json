@@ -22,6 +22,7 @@
         "resizable": true,
         "fullscreen": false,
         "visible": false,
+        "center": false,
         "decorations": true,
         "skipTaskbar": true
       }
@@ -39,6 +40,9 @@
       "icons/128x128@2x.png",
       "icons/icon.icns",
       "icons/icon.ico"
+    ],
+    "resources": [
+      "resources/picker_guard_patch.py"
     ],
     "macOS": {
       "minimumSystemVersion": "11.0"

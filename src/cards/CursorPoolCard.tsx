@@ -107,6 +107,7 @@ export function CursorPoolCard() {
   return (
     <CardShell
       className="card-span-2"
+      index="06"
       title="Cursor 多账号池"
       subtitle="Per-account plan usage · tokens encrypted at rest"
       refreshedAt={latest}
