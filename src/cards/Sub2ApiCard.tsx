@@ -1,9 +1,16 @@
 import { useCallback, useEffect, useState } from "react";
+import { open as chooseFile } from "@tauri-apps/plugin-dialog";
+import { openUrl } from "@tauri-apps/plugin-opener";
 import { CardShell } from "../components/CardShell";
 import { ProgressBar } from "../components/ProgressBar";
 import { api, REFRESH_MS } from "../lib/api";
 import { formatDuration } from "../lib/format";
-import type { Sub2ApiAccountQuota, Sub2ApiUsage } from "../types";
+import type {
+  Sub2ApiAccountQuota,
+  Sub2ApiBrowserLoginStatus,
+  Sub2ApiImportResult,
+  Sub2ApiUsage,
+} from "../types";
 
 function statusLabel(status: string): string {
   switch (status) {
@@ -95,6 +102,9 @@ export function Sub2ApiCard() {
   const [data, setData] = useState<Sub2ApiUsage | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [importResult, setImportResult] = useState<Sub2ApiImportResult | null>(null);
+  const [browserLogin, setBrowserLogin] = useState<Sub2ApiBrowserLoginStatus | null>(null);
+  const [callbackUrl, setCallbackUrl] = useState("");
 
   const refresh = useCallback(async () => {
     setBusy(true);
@@ -113,6 +123,78 @@ export function Sub2ApiCard() {
     const id = window.setInterval(() => void refresh(), REFRESH_MS.sub2api);
     return () => window.clearInterval(id);
   }, [refresh]);
+
+  const chooseImportFile = async (kind: "json" | "txt") => {
+    const path = await chooseFile({
+      multiple: false,
+      directory: false,
+      filters:
+        kind === "json"
+          ? [{ name: "Codex OAuth JSON", extensions: ["json", "jsonl"] }]
+          : [{ name: "Card export TXT", extensions: ["txt"] }],
+    });
+    if (!path || Array.isArray(path)) return;
+    const ok = window.confirm(
+      `确认导入本地文件「${path.split("/").pop() ?? path}」？\n凭据仅会传给本机 Sub2API，不会显示在 Hub 中。`,
+    );
+    if (!ok) return;
+    setBusy(true);
+    setError(null);
+    setImportResult(null);
+    try {
+      const result = await api.importSub2apiFile(path);
+      setImportResult(result);
+      setData(await api.getSub2apiUsage());
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const startBrowserLogin = async () => {
+    setBusy(true);
+    setError(null);
+    setImportResult(null);
+    try {
+      const status = await api.beginSub2apiBrowserLogin();
+      setBrowserLogin(status);
+      setCallbackUrl("");
+      await openUrl(status.loginUrl);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+      setBrowserLogin(null);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const completeBrowserLogin = async () => {
+    const sessionId = browserLogin?.sessionId;
+    if (!sessionId || !callbackUrl.trim()) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const status = await api.completeSub2apiBrowserLogin(sessionId, callbackUrl.trim());
+      setBrowserLogin(status);
+      setData(await api.getSub2apiUsage());
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const cancelBrowserLogin = async () => {
+    const sessionId = browserLogin?.sessionId;
+    if (!sessionId) return;
+    try {
+      await api.cancelSub2apiBrowserLogin(sessionId);
+      setBrowserLogin(null);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    }
+  };
 
   const onDelete = async (account: Sub2ApiAccountQuota) => {
     const label = account.email || account.name || `#${account.id}`;
@@ -143,6 +225,56 @@ export function Sub2ApiCard() {
       refreshing={busy}
     >
       {error ? <p className="error-line">{error}</p> : null}
+
+      <section className="account-mini-list">
+        <div className="account-mini-head">
+          <div>
+            <div className="account-mini-name">导入 OAuth 账号</div>
+            <div className="muted-line">仅 OpenAI/Codex；凭据只在本机处理</div>
+          </div>
+        </div>
+        <div className="account-mini-actions">
+          <button type="button" className="btn ghost" disabled={busy} onClick={() => void chooseImportFile("json")}>
+            导入 JSON
+          </button>
+          <button type="button" className="btn ghost" disabled={busy} onClick={() => void chooseImportFile("txt")}>
+            导入 TXT
+          </button>
+          <button type="button" className="btn" disabled={busy || browserLogin?.state === "waiting"} onClick={() => void startBrowserLogin()}>
+            浏览器登录 + 2FA
+          </button>
+        </div>
+        {browserLogin ? (
+          <div className={browserLogin.state === "complete" ? "muted-line" : "error-line"}>
+            <p>
+              {browserLogin.message}
+              {browserLogin.importedAccounts.length ? ` ${browserLogin.importedAccounts.join("、")}` : ""}
+            </p>
+            {browserLogin.state === "waiting" ? (
+              <div className="account-mini-actions">
+                <input
+                  className="field-input mono"
+                  value={callbackUrl}
+                  onChange={(event) => setCallbackUrl(event.target.value)}
+                  placeholder="粘贴登录后最终跳转的完整 URL"
+                  aria-label="OAuth callback URL"
+                />
+                <button type="button" className="btn" disabled={busy || !callbackUrl.trim()} onClick={() => void completeBrowserLogin()}>
+                  完成导入
+                </button>
+              <button type="button" className="btn ghost danger-text" onClick={() => void cancelBrowserLogin()}>
+                取消
+              </button>
+              </div>
+            ) : null}
+          </div>
+        ) : null}
+        {importResult ? (
+          <p className="muted-line">
+            {importResult.summary} 新增 {importResult.created} · 更新 {importResult.updated} · 跳过 {importResult.skipped} · 失败 {importResult.failed}
+          </p>
+        ) : null}
+      </section>
 
       <div className="metric-row">
         <div>

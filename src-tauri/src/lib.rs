@@ -246,6 +246,7 @@ fn spawn_tray_updater(tray: TrayIcon) {
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_dialog::init())
         .invoke_handler(tauri::generate_handler![
             gateway::get_gateway_status,
             gateway::start_gateway,
@@ -254,6 +255,11 @@ pub fn run() {
             gateway::save_provider_config,
             sub2api::get_sub2api_usage,
             sub2api::delete_sub2api_account,
+            sub2api::import_sub2api_file,
+            sub2api::begin_sub2api_browser_login,
+            sub2api::get_sub2api_browser_login_status,
+            sub2api::complete_sub2api_browser_login,
+            sub2api::cancel_sub2api_browser_login,
             aihub::get_aihub_balance,
             aihub::set_aihub_api_key,
             aihub::clear_aihub_api_key,

@@ -2,12 +2,28 @@
 
 use crate::gateway::sub2api_dir;
 use crate::http_util::{friendly_http_err, now_iso, BROWSER_UA, HTTP};
+use chrono::{DateTime, Utc};
+use parking_lot::Mutex;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::fs;
+use std::path::{Path, PathBuf};
+use std::process::Command;
 use std::time::Duration;
+use uuid::Uuid;
 
 const GATEWAY_BASE: &str = "http://127.0.0.1:18080";
+const MAX_IMPORT_BYTES: u64 = 10 * 1024 * 1024;
+
+static BROWSER_LOGIN: Mutex<Option<BrowserLoginSession>> = Mutex::new(None);
+
+#[derive(Debug, Clone)]
+struct BrowserLoginSession {
+    id: String,
+    oauth_session_id: String,
+    state: String,
+    started_at: DateTime<Utc>,
+}
 
 /// Remaining quota window for Sub2API (5h or 7d).
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -44,6 +60,28 @@ pub struct Sub2ApiUsage {
     pub pool_available: u32,
     pub accounts: Vec<Sub2ApiAccountQuota>,
     pub fetched_at: String,
+}
+
+/// Sanitized result returned after a local account import.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Sub2ApiImportResult {
+    pub created: u32,
+    pub updated: u32,
+    pub skipped: u32,
+    pub failed: u32,
+    pub summary: String,
+}
+
+/// State of the system-browser OAuth/2FA handoff.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BrowserLoginStatus {
+    pub session_id: Option<String>,
+    pub login_url: String,
+    pub state: String,
+    pub message: String,
+    pub imported_accounts: Vec<String>,
 }
 
 fn read_admin_creds() -> Result<(String, String), String> {
@@ -106,6 +144,30 @@ fn admin_get(path: &str) -> Result<Value, String> {
             .and_then(|m| m.as_str())
             .unwrap_or("request failed");
         return Err(format!("admin {path} HTTP {status}: {msg}"));
+    }
+    Ok(body)
+}
+
+fn admin_post(path: &str, payload: Value) -> Result<Value, String> {
+    let token = admin_login()?;
+    let resp = HTTP
+        .post(format!("{GATEWAY_BASE}{path}"))
+        .bearer_auth(&token)
+        .header("User-Agent", BROWSER_UA)
+        .json(&payload)
+        .send()
+        .map_err(|e| friendly_http_err(&format!("admin POST {path}"), e))?;
+    let status = resp.status();
+    let body: Value = resp
+        .json()
+        .map_err(|e| format!("parse admin {path}: {e}"))?;
+    if !status.is_success() {
+        let message = body
+            .get("message")
+            .and_then(Value::as_str)
+            .or_else(|| body.pointer("/error/message").and_then(Value::as_str))
+            .unwrap_or("request failed");
+        return Err(format!("admin {path} HTTP {status}: {message}"));
     }
     Ok(body)
 }
@@ -251,6 +313,270 @@ fn list_oauth_accounts() -> Result<Vec<Value>, String> {
             .collect();
     }
     Ok(out)
+}
+
+fn validate_import_path(path: &Path) -> Result<(), String> {
+    let extension = path
+        .extension()
+        .and_then(|ext| ext.to_str())
+        .unwrap_or("")
+        .to_ascii_lowercase();
+    if !matches!(extension.as_str(), "json" | "jsonl" | "txt") {
+        return Err("仅支持 JSON、JSONL 或 TXT 导入文件".into());
+    }
+    let metadata = fs::metadata(path)
+        .map_err(|e| format!("无法读取导入文件 {}: {e}", path.display()))?;
+    if !metadata.is_file() {
+        return Err("导入路径不是普通文件".into());
+    }
+    if metadata.len() == 0 {
+        return Err("导入文件为空".into());
+    }
+    if metadata.len() > MAX_IMPORT_BYTES {
+        return Err(format!("导入文件超过 {} MiB 限制", MAX_IMPORT_BYTES / 1024 / 1024));
+    }
+    Ok(())
+}
+
+fn private_import_copy(source: &Path) -> Result<PathBuf, String> {
+    validate_import_path(source)?;
+    let suffix = source
+        .extension()
+        .and_then(|ext| ext.to_str())
+        .unwrap_or("json");
+    let target = std::env::temp_dir().join(format!("codex-provider-hub-{}.{}", Uuid::new_v4(), suffix));
+    fs::copy(source, &target)
+        .map_err(|e| format!("创建本地导入副本失败: {e}"))?;
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        fs::set_permissions(&target, fs::Permissions::from_mode(0o600))
+            .map_err(|e| format!("保护临时导入文件失败: {e}"))?;
+    }
+    Ok(target)
+}
+
+fn summarize_import_output(output: &str) -> Sub2ApiImportResult {
+    let mut result = Sub2ApiImportResult {
+        created: 0,
+        updated: 0,
+        skipped: 0,
+        failed: 0,
+        summary: "导入已完成，请刷新号池确认账号状态。".into(),
+    };
+    // The maintained local importer emits these counters for Codex session imports.
+    for line in output.lines() {
+        let clean = line.trim();
+        if clean.contains("access_token") || clean.contains("refresh_token") || clean.contains("Bearer ") {
+            continue;
+        }
+        let count_after = |label: &str| {
+            clean
+                .split_once(label)
+                .and_then(|(_, rest)| {
+                    rest.split(|c: char| !c.is_ascii_digit())
+                        .find(|part| !part.is_empty())
+                })
+                .and_then(|part| part.parse::<u32>().ok())
+        };
+        if let Some(count) = count_after("新增") {
+            result.created = count;
+        }
+        if let Some(count) = count_after("更新") {
+            result.updated = count;
+        }
+        if let Some(count) = count_after("跳过") {
+            result.skipped = count;
+        }
+        if let Some(count) = count_after("失败") {
+            result.failed = count;
+        }
+    }
+    result
+}
+
+/// Import JSON/JSONL/TXT through the maintained local Sub2API importer.
+///
+/// Credentials are copied to a 0600 temporary file, never parsed or returned
+/// by the Hub, then removed whether the importer succeeds or fails.
+#[tauri::command]
+pub fn import_sub2api_file(file_path: String, name: Option<String>) -> Result<Sub2ApiImportResult, String> {
+    let source = PathBuf::from(file_path);
+    let temp_copy = private_import_copy(&source)?;
+    let script = sub2api_dir().join("sub2api");
+    if !script.is_file() {
+        let _ = fs::remove_file(&temp_copy);
+        return Err(format!("未找到 Sub2API 导入脚本: {}", script.display()));
+    }
+
+    let command_result = Command::new(&script)
+        .arg("import")
+        .arg(&temp_copy)
+        .args(name.as_deref().filter(|value| !value.trim().is_empty()))
+        .output();
+    let _ = fs::remove_file(&temp_copy);
+    let output = command_result.map_err(|e| format!("运行 Sub2API 导入器失败: {e}"))?;
+    let combined = format!(
+        "{}\n{}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let result = summarize_import_output(&combined);
+    if !output.status.success() {
+        let safe_message = combined
+            .lines()
+            .rev()
+            .find(|line| line.contains("[ERROR]") || line.contains("不支持") || line.contains("失败"))
+            .map(str::trim)
+            .unwrap_or("Sub2API 未接受该导入文件");
+        return Err(format!("导入失败: {safe_message}"));
+    }
+    crate::http_util::invalidate_cache("sub2api_usage");
+    Ok(result)
+}
+
+fn browser_login_url() -> String {
+    format!("{GATEWAY_BASE}/admin/accounts")
+}
+
+/// Starts a user-driven login handoff. The Hub intentionally opens the local
+/// Sub2API account UI rather than collecting an OpenAI password or 2FA code.
+#[tauri::command]
+pub fn begin_sub2api_browser_login() -> Result<BrowserLoginStatus, String> {
+    let response = admin_post("/api/v1/admin/openai/generate-auth-url", json!({}))?;
+    let data = response.get("data").unwrap_or(&response);
+    let login_url = data
+        .get("auth_url")
+        .or_else(|| data.get("url"))
+        .and_then(Value::as_str)
+        .ok_or_else(|| "Sub2API 未返回 OpenAI 授权链接".to_string())?
+        .to_string();
+    let oauth_session_id = data
+        .get("session_id")
+        .or_else(|| data.get("sessionId"))
+        .and_then(Value::as_str)
+        .ok_or_else(|| "Sub2API 未返回 OAuth 会话 ID".to_string())?
+        .to_string();
+    let state = data
+        .get("state")
+        .and_then(Value::as_str)
+        .ok_or_else(|| "Sub2API 未返回 OAuth state".to_string())?
+        .to_string();
+    let id = Uuid::new_v4().to_string();
+    *BROWSER_LOGIN.lock() = Some(BrowserLoginSession {
+        id: id.clone(),
+        oauth_session_id,
+        state,
+        started_at: Utc::now(),
+    });
+    Ok(BrowserLoginStatus {
+        session_id: Some(id),
+        login_url,
+        state: "waiting".into(),
+        message: "已打开本地 Sub2API 账号页。请新增 OpenAI/Codex OAuth 账号，并在官方浏览器页完成登录、2FA 和验证码。".into(),
+        imported_accounts: vec![],
+    })
+}
+
+#[tauri::command]
+pub fn get_sub2api_browser_login_status(session_id: String) -> Result<BrowserLoginStatus, String> {
+    let session = BROWSER_LOGIN.lock().clone();
+    let Some(session) = session else {
+        return Ok(BrowserLoginStatus {
+            session_id: None,
+            login_url: browser_login_url(),
+            state: "cancelled".into(),
+            message: "没有进行中的浏览器登录。".into(),
+            imported_accounts: vec![],
+        });
+    };
+    if session.id != session_id {
+        return Err("浏览器登录会话不匹配".into());
+    }
+    if (Utc::now() - session.started_at).num_minutes() >= 10 {
+        *BROWSER_LOGIN.lock() = None;
+        return Ok(BrowserLoginStatus {
+            session_id: None,
+            login_url: browser_login_url(),
+            state: "expired".into(),
+            message: "登录等待已超时，请重新开始。".into(),
+            imported_accounts: vec![],
+        });
+    }
+    Ok(BrowserLoginStatus {
+        session_id: Some(session.id),
+        login_url: browser_login_url(),
+        state: "waiting".into(),
+        message: "请在浏览器完成登录后，将最终跳转的完整 URL 粘贴回 Hub。".into(),
+        imported_accounts: vec![],
+    })
+}
+
+fn callback_query_value(callback_url: &str, key: &str) -> Option<String> {
+    let query = callback_url.split_once('?')?.1.split('#').next().unwrap_or("");
+    query.split('&').find_map(|part| {
+        let (name, value) = part.split_once('=')?;
+        (name == key).then(|| value.to_string())
+    })
+}
+
+/// Completes the server-issued OAuth session using the callback URL copied
+/// from the system browser after OpenAI login and 2FA.
+#[tauri::command]
+pub fn complete_sub2api_browser_login(
+    session_id: String,
+    callback_url: String,
+    name: Option<String>,
+) -> Result<BrowserLoginStatus, String> {
+    let session = BROWSER_LOGIN
+        .lock()
+        .clone()
+        .ok_or_else(|| "没有进行中的浏览器登录。".to_string())?;
+    if session.id != session_id {
+        return Err("浏览器登录会话不匹配".into());
+    }
+    let code = callback_query_value(&callback_url, "code")
+        .ok_or_else(|| "回调 URL 中没有 OAuth code 参数".to_string())?;
+    let state = callback_query_value(&callback_url, "state")
+        .ok_or_else(|| "回调 URL 中没有 OAuth state 参数".to_string())?;
+    if state != session.state {
+        return Err("OAuth state 不匹配，已拒绝完成登录。".into());
+    }
+    let mut payload = json!({
+        "session_id": session.oauth_session_id,
+        "code": code,
+        "state": state,
+    });
+    if let Some(name) = name.filter(|value| !value.trim().is_empty()) {
+        payload["name"] = Value::String(name);
+    }
+    let response = admin_post("/api/v1/admin/openai/create-from-oauth", payload)?;
+    let data = response.get("data").unwrap_or(&response);
+    let account_name = data
+        .pointer("/account/name")
+        .and_then(Value::as_str)
+        .or_else(|| data.get("name").and_then(Value::as_str))
+        .unwrap_or("新 OAuth 账号")
+        .to_string();
+    *BROWSER_LOGIN.lock() = None;
+    crate::http_util::invalidate_cache("sub2api_usage");
+    Ok(BrowserLoginStatus {
+        session_id: None,
+        login_url: browser_login_url(),
+        state: "complete".into(),
+        message: "OpenAI/Codex OAuth 账号已导入。".into(),
+        imported_accounts: vec![account_name],
+    })
+}
+
+#[tauri::command]
+pub fn cancel_sub2api_browser_login(session_id: String) -> Result<(), String> {
+    let mut guard = BROWSER_LOGIN.lock();
+    if guard.as_ref().is_some_and(|session| session.id == session_id) {
+        *guard = None;
+        return Ok(());
+    }
+    Err("浏览器登录会话不匹配或已结束".into())
 }
 
 pub fn fetch_sub2api_usage() -> Result<Sub2ApiUsage, String> {
@@ -399,6 +725,28 @@ pub fn delete_sub2api_account(account_id: i64) -> Result<(), String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn accepts_supported_small_import_files_only() {
+        let path = std::env::temp_dir().join(format!("hub-import-{}.json", Uuid::new_v4()));
+        fs::write(&path, b"{\"refresh_token\":\"test\"}").expect("write fixture");
+        assert!(validate_import_path(&path).is_ok());
+        let unsupported = path.with_extension("csv");
+        fs::rename(&path, &unsupported).expect("rename fixture");
+        assert!(validate_import_path(&unsupported).is_err());
+        let _ = fs::remove_file(unsupported);
+    }
+
+    #[test]
+    fn import_summary_does_not_expose_tokens() {
+        let result = summarize_import_output(
+            "导入完成：总数 3，新增 2，更新 1，跳过 0，失败 0\naccess_token=secret",
+        );
+        assert_eq!(result.created, 2);
+        assert_eq!(result.updated, 1);
+        assert_eq!(result.failed, 0);
+        assert!(!result.summary.contains("secret"));
+    }
 
     #[test]
     fn live_oauth_accounts() {

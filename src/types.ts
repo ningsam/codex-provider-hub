@@ -51,6 +51,22 @@ export interface Sub2ApiUsage {
   fetchedAt: string;
 }
 
+export interface Sub2ApiImportResult {
+  created: number;
+  updated: number;
+  skipped: number;
+  failed: number;
+  summary: string;
+}
+
+export interface Sub2ApiBrowserLoginStatus {
+  sessionId: string | null;
+  loginUrl: string;
+  state: "waiting" | "complete" | "expired" | "cancelled";
+  message: string;
+  importedAccounts: string[];
+}
+
 export interface AihubBalance {
   balance: number;
   used: number;

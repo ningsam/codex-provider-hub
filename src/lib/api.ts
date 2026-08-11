@@ -8,6 +8,8 @@ import type {
   ProviderConfig,
   ProviderInfo,
   ProviderMutationResult,
+  Sub2ApiBrowserLoginStatus,
+  Sub2ApiImportResult,
   Sub2ApiUsage,
 } from "../types";
 
@@ -22,6 +24,23 @@ export const api = {
   getSub2apiUsage: () => invoke<Sub2ApiUsage>("get_sub2api_usage"),
   deleteSub2apiAccount: (accountId: number) =>
     invoke<void>("delete_sub2api_account", { accountId }),
+  importSub2apiFile: (filePath: string, name?: string) =>
+    invoke<Sub2ApiImportResult>("import_sub2api_file", {
+      filePath,
+      name: name ?? null,
+    }),
+  beginSub2apiBrowserLogin: () =>
+    invoke<Sub2ApiBrowserLoginStatus>("begin_sub2api_browser_login"),
+  getSub2apiBrowserLoginStatus: (sessionId: string) =>
+    invoke<Sub2ApiBrowserLoginStatus>("get_sub2api_browser_login_status", { sessionId }),
+  completeSub2apiBrowserLogin: (sessionId: string, callbackUrl: string, name?: string) =>
+    invoke<Sub2ApiBrowserLoginStatus>("complete_sub2api_browser_login", {
+      sessionId,
+      callbackUrl,
+      name: name ?? null,
+    }),
+  cancelSub2apiBrowserLogin: (sessionId: string) =>
+    invoke<void>("cancel_sub2api_browser_login", { sessionId }),
 
   getAihubBalance: () => invoke<AihubBalance>("get_aihub_balance"),
   setAihubApiKey: (apiKey: string) =>
