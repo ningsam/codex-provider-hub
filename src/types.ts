@@ -62,7 +62,7 @@ export interface Sub2ApiImportResult {
 export interface Sub2ApiBrowserLoginStatus {
   sessionId: string | null;
   loginUrl: string;
-  state: "waiting" | "complete" | "expired" | "cancelled";
+  state: "waiting" | "ready" | "complete" | "expired" | "cancelled";
   message: string;
   importedAccounts: string[];
 }

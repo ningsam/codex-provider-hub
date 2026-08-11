@@ -33,10 +33,9 @@ export const api = {
     invoke<Sub2ApiBrowserLoginStatus>("begin_sub2api_browser_login"),
   getSub2apiBrowserLoginStatus: (sessionId: string) =>
     invoke<Sub2ApiBrowserLoginStatus>("get_sub2api_browser_login_status", { sessionId }),
-  completeSub2apiBrowserLogin: (sessionId: string, callbackUrl: string, name?: string) =>
+  completeSub2apiBrowserLogin: (sessionId: string, name?: string) =>
     invoke<Sub2ApiBrowserLoginStatus>("complete_sub2api_browser_login", {
       sessionId,
-      callbackUrl,
       name: name ?? null,
     }),
   cancelSub2apiBrowserLogin: (sessionId: string) =>

@@ -7,8 +7,11 @@ use parking_lot::Mutex;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::fs;
+use std::io::{Read, Write};
+use std::net::TcpListener;
 use std::path::{Path, PathBuf};
 use std::process::Command;
+use std::thread;
 use std::time::Duration;
 use uuid::Uuid;
 
@@ -22,6 +25,7 @@ struct BrowserLoginSession {
     id: String,
     oauth_session_id: String,
     state: String,
+    callback_url: Option<String>,
     started_at: DateTime<Utc>,
 }
 
@@ -439,6 +443,43 @@ fn browser_login_url() -> String {
     format!("{GATEWAY_BASE}/admin/accounts")
 }
 
+fn start_oauth_callback_listener(session_id: String) -> Result<(), String> {
+    let listener = TcpListener::bind("127.0.0.1:1455")
+        .map_err(|e| format!("无法监听 OpenAI OAuth 回调端口 1455: {e}"))?;
+    thread::spawn(move || {
+        for stream in listener.incoming().take(1) {
+            let Ok(mut stream) = stream else { return };
+            let mut request = [0_u8; 8192];
+            let Ok(read) = stream.read(&mut request) else { return };
+            let first_line = String::from_utf8_lossy(&request[..read])
+                .lines()
+                .next()
+                .unwrap_or("")
+                .to_string();
+            let path = first_line
+                .split_whitespace()
+                .nth(1)
+                .filter(|path| path.starts_with("/auth/callback"));
+            if let Some(path) = path {
+                if let Some(session) = BROWSER_LOGIN.lock().as_mut() {
+                    if session.id == session_id {
+                        session.callback_url = Some(format!("http://localhost:1455{path}"));
+                    }
+                }
+            }
+            let body = "<html><body><h2>Codex Provider Hub</h2><p>登录回调已接收，可回到 Hub 完成导入。</p></body></html>";
+            let response = format!(
+                "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}",
+                body.len(),
+                body
+            );
+            let _ = stream.write_all(response.as_bytes());
+            let _ = stream.flush();
+        }
+    });
+    Ok(())
+}
+
 /// Starts a user-driven login handoff. The Hub intentionally opens the local
 /// Sub2API account UI rather than collecting an OpenAI password or 2FA code.
 #[tauri::command]
@@ -466,8 +507,13 @@ pub fn begin_sub2api_browser_login() -> Result<BrowserLoginStatus, String> {
         id: id.clone(),
         oauth_session_id,
         state,
+        callback_url: None,
         started_at: Utc::now(),
     });
+    if let Err(error) = start_oauth_callback_listener(id.clone()) {
+        *BROWSER_LOGIN.lock() = None;
+        return Err(error);
+    }
     Ok(BrowserLoginStatus {
         session_id: Some(id),
         login_url,
@@ -502,6 +548,15 @@ pub fn get_sub2api_browser_login_status(session_id: String) -> Result<BrowserLog
             imported_accounts: vec![],
         });
     }
+    if session.callback_url.is_some() {
+        return Ok(BrowserLoginStatus {
+            session_id: Some(session.id),
+            login_url: browser_login_url(),
+            state: "ready".into(),
+            message: "已接收浏览器回调，正在导入 OAuth 账号。".into(),
+            imported_accounts: vec![],
+        });
+    }
     Ok(BrowserLoginStatus {
         session_id: Some(session.id),
         login_url: browser_login_url(),
@@ -524,7 +579,6 @@ fn callback_query_value(callback_url: &str, key: &str) -> Option<String> {
 #[tauri::command]
 pub fn complete_sub2api_browser_login(
     session_id: String,
-    callback_url: String,
     name: Option<String>,
 ) -> Result<BrowserLoginStatus, String> {
     let session = BROWSER_LOGIN
@@ -534,6 +588,9 @@ pub fn complete_sub2api_browser_login(
     if session.id != session_id {
         return Err("浏览器登录会话不匹配".into());
     }
+    let callback_url = session
+        .callback_url
+        .ok_or_else(|| "尚未收到浏览器 OAuth 回调。".to_string())?;
     let code = callback_query_value(&callback_url, "code")
         .ok_or_else(|| "回调 URL 中没有 OAuth code 参数".to_string())?;
     let state = callback_query_value(&callback_url, "state")
