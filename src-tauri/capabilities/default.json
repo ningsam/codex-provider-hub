@@ -11,6 +11,7 @@
     "core:window:allow-set-position",
     "core:window:allow-close",
     "core:tray:default",
-    "opener:default"
+    "opener:default",
+    "dialog:allow-open"
   ]
 }

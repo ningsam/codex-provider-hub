@@ -175,11 +175,7 @@ fn read_anyrouter_key() -> Result<String, String> {
             .strip_prefix("export ANYROUTER_API_KEY=")
             .or_else(|| line.strip_prefix("ANYROUTER_API_KEY="))
         {
-            let key = rest
-                .trim()
-                .trim_matches('"')
-                .trim_matches('\'')
-                .to_string();
+            let key = rest.trim().trim_matches('"').trim_matches('\'').to_string();
             if !key.is_empty() {
                 return Ok(key);
             }
@@ -188,7 +184,11 @@ fn read_anyrouter_key() -> Result<String, String> {
     Err("ANYROUTER_API_KEY not found in env or ~/.zshrc".into())
 }
 
-fn parse_aihub_usage_body(body: &Value, key_source: &str, has_stored_key: bool) -> Result<AihubBalance, String> {
+fn parse_aihub_usage_body(
+    body: &Value,
+    key_source: &str,
+    has_stored_key: bool,
+) -> Result<AihubBalance, String> {
     let balance = body
         .get("balance")
         .or_else(|| body.get("remaining"))
@@ -198,7 +198,10 @@ fn parse_aihub_usage_body(body: &Value, key_source: &str, has_stored_key: bool) 
     let used = body
         .pointer("/usage/today/actual_cost")
         .and_then(|v| v.as_f64())
-        .or_else(|| body.pointer("/usage/total/actual_cost").and_then(|v| v.as_f64()))
+        .or_else(|| {
+            body.pointer("/usage/total/actual_cost")
+                .and_then(|v| v.as_f64())
+        })
         .unwrap_or(0.0);
 
     let currency = body
@@ -222,7 +225,11 @@ fn parse_aihub_usage_body(body: &Value, key_source: &str, has_stored_key: bool) 
     })
 }
 
-fn fetch_aihub_with_key(key: &str, source: &str, has_stored_key: bool) -> Result<AihubBalance, String> {
+fn fetch_aihub_with_key(
+    key: &str,
+    source: &str,
+    has_stored_key: bool,
+) -> Result<AihubBalance, String> {
     let resp = HTTP
         .get(AIHUB_USAGE_URL)
         .bearer_auth(key)
@@ -238,9 +245,7 @@ fn fetch_aihub_with_key(key: &str, source: &str, has_stored_key: bool) -> Result
     if !status.is_success() {
         let body = resp.text().unwrap_or_default();
         let snippet = body.chars().take(120).collect::<String>();
-        return Err(format!(
-            "AIHub HTTP {status}（源: {source}）{snippet}"
-        ));
+        return Err(format!("AIHub HTTP {status}（源: {source}）{snippet}"));
     }
     let body: Value = resp
         .json()
@@ -259,7 +264,9 @@ fn fetch_gateway_aihub_partial(has_stored_key: bool) -> Result<AihubBalance, Str
         .map_err(|e| friendly_http_err("gateway /v1/usage", e))?;
     let status = resp.status();
     if !status.is_success() {
-        return Err(format!("gateway /v1/usage HTTP {status}（源: local gateway）"));
+        return Err(format!(
+            "gateway /v1/usage HTTP {status}（源: local gateway）"
+        ));
     }
     let body: Value = resp
         .json()
@@ -365,11 +372,7 @@ pub fn fetch_aihub_balance() -> Result<AihubBalance, String> {
                 // Still return partial data so the card is not empty, but surface key failures
                 // via key_source.
                 let mut b = b;
-                b.key_source = format!(
-                    "{} · aihub.top 失败: {}",
-                    b.key_source,
-                    errors.join(" | ")
-                );
+                b.key_source = format!("{} · aihub.top 失败: {}", b.key_source, errors.join(" | "));
                 return Ok(b);
             }
             return Ok(b);
@@ -383,7 +386,11 @@ pub fn fetch_aihub_balance() -> Result<AihubBalance, String> {
 /// Fetch AIHub account remaining balance and used amount.
 #[tauri::command]
 pub fn get_aihub_balance() -> Result<AihubBalance, String> {
-    crate::http_util::cached_json("aihub_balance", Duration::from_secs(60), fetch_aihub_balance)
+    crate::http_util::cached_json(
+        "aihub_balance",
+        Duration::from_secs(60),
+        fetch_aihub_balance,
+    )
 }
 
 /// Persist an AIHub API key (encrypted) for subsequent balance fetches.
@@ -416,6 +423,7 @@ mod tests {
     use super::*;
 
     #[test]
+    #[ignore = "requires live AIHub credentials and network access"]
     fn live_balance() {
         let b = fetch_aihub_balance().expect("aihub");
         println!(
@@ -432,7 +440,8 @@ mod tests {
     }
 
     #[test]
-    fn sub2api_key_readable() {
+    #[ignore = "requires the live local Sub2API deployment and AIHub network access"]
+    fn live_sub2api_key_readable() {
         let key = read_sub2api_aihub_key().expect("sub2api aihub key");
         assert!(key.starts_with("sk-"));
         let b = fetch_aihub_with_key(&key, "test", false).expect("usage");

@@ -7,8 +7,7 @@ use std::collections::HashMap;
 use std::time::{Duration, Instant};
 
 pub const HTTP_TIMEOUT: Duration = Duration::from_secs(8);
-pub const BROWSER_UA: &str =
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 \
+pub const BROWSER_UA: &str = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 \
      (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 
 pub static HTTP: Lazy<Client> = Lazy::new(|| {
@@ -24,8 +23,7 @@ struct CacheEntry {
     payload: String,
 }
 
-static CACHE: Lazy<Mutex<HashMap<String, CacheEntry>>> =
-    Lazy::new(|| Mutex::new(HashMap::new()));
+static CACHE: Lazy<Mutex<HashMap<String, CacheEntry>>> = Lazy::new(|| Mutex::new(HashMap::new()));
 
 /// Return cached JSON value or compute via `fetch`, storing for `ttl`.
 pub fn cached_json<T, F>(key: &str, ttl: Duration, fetch: F) -> Result<T, String>

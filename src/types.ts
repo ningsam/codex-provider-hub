@@ -28,6 +28,23 @@ export interface QuotaWindow {
   resetAfterSeconds: number;
 }
 
+export interface OfficialQuotaWindow {
+  usedPercent: number;
+  limitReached: boolean;
+  resetAfterSeconds: number;
+  resetAt: string | null;
+}
+
+export interface OfficialQuotaProbe {
+  accountId: number;
+  planType: string;
+  allowed: boolean;
+  limitReached: boolean;
+  fiveHour: OfficialQuotaWindow | null;
+  sevenDay: OfficialQuotaWindow | null;
+  fetchedAt: string;
+}
+
 /** One real OpenAI/Codex OAuth account (not apikey 中转站). */
 export interface Sub2ApiAccountQuota {
   id: number;
@@ -39,6 +56,52 @@ export interface Sub2ApiAccountQuota {
   fiveHour: QuotaWindow | null;
   sevenDay: QuotaWindow | null;
   schedulable: boolean;
+  available: boolean;
+  availability: string;
+  availabilityReason: string;
+  recoverable: boolean;
+  unavailableUntil: string | null;
+  preferred: boolean;
+}
+
+export interface Sub2ApiRoutingStatus {
+  preferredAccountId: number | null;
+  state:
+    | "automatic"
+    | "preferred"
+    | "failover"
+    | "unavailable"
+    | "fallback_missing"
+    | "unconfigured"
+    | "stale"
+    | "error";
+  message: string;
+  autoPauseThresholdPercent: number;
+  policy: Sub2ApiRoutingPolicy;
+  policyConfigured: boolean;
+  recentWindowMinutes: number;
+  recentRequestLimit: number;
+  recentRequestCount: number;
+  lastSuccessfulAccountId: number | null;
+  lastSuccessfulAccountName: string | null;
+  lastSuccessfulAccountType: string | null;
+  lastSuccessfulAt: string | null;
+  distribution: Sub2ApiRoutingDistribution[];
+  oauthAvailableCount: number;
+  relayAvailableCount: number;
+  policyDeviation: boolean;
+  policyDeviationMessage: string | null;
+  activeRelayName: string | null;
+}
+
+export type Sub2ApiRoutingPolicy = "oauthFirst" | "relayFirst" | "balanced";
+
+export interface Sub2ApiRoutingDistribution {
+  accountId: number;
+  name: string;
+  accountType: string;
+  requestCount: number;
+  percent: number;
 }
 
 export interface Sub2ApiUsage {
@@ -49,6 +112,7 @@ export interface Sub2ApiUsage {
   poolTotal: number;
   poolAvailable: number;
   accounts: Sub2ApiAccountQuota[];
+  routing: Sub2ApiRoutingStatus;
   fetchedAt: string;
 }
 

@@ -12,8 +12,7 @@ use uuid::Uuid;
 
 const CURSOR_USAGE_URL: &str =
     "https://api2.cursor.sh/aiserver.v1.DashboardService/GetCurrentPeriodUsage";
-const CURSOR_PLAN_URL: &str =
-    "https://api2.cursor.sh/aiserver.v1.DashboardService/GetPlanInfo";
+const CURSOR_PLAN_URL: &str = "https://api2.cursor.sh/aiserver.v1.DashboardService/GetPlanInfo";
 
 /// A Cursor account credential row stored by the hub.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -347,6 +346,7 @@ mod tests {
     use super::*;
 
     #[test]
+    #[ignore = "requires a live local Cursor login and network access"]
     fn live_local_session_usage() {
         let (email, token) = read_local_cursor_session().expect("local session");
         println!("email={email} token_len={}", token.len());

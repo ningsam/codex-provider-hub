@@ -1,8 +1,11 @@
 import { AihubCard } from "./cards/AihubCard";
+import { ChannelSwitchCard } from "./cards/ChannelSwitchCard";
+import { CodexSessionsCard } from "./cards/CodexSessionsCard";
 import { CursorPoolCard } from "./cards/CursorPoolCard";
 import { GatewayCard } from "./cards/GatewayCard";
 import { PickerGuardCard } from "./cards/PickerGuardCard";
 import { ProvidersCard } from "./cards/ProvidersCard";
+import { RouteDoctorCard } from "./cards/RouteDoctorCard";
 import { Sub2ApiCard } from "./cards/Sub2ApiCard";
 import "./App.css";
 
@@ -41,10 +44,19 @@ export default function App() {
           <AihubCard />
         </div>
         <div className="board-row board-row-full">
+          <RouteDoctorCard />
+        </div>
+        <div className="board-row board-row-full">
           <ProvidersCard />
         </div>
         <div className="board-row board-row-full">
+          <ChannelSwitchCard />
+        </div>
+        <div className="board-row board-row-full">
           <CursorPoolCard />
+        </div>
+        <div className="board-row board-row-full">
+          <CodexSessionsCard />
         </div>
       </main>
     </div>

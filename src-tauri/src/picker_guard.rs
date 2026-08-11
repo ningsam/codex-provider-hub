@@ -78,9 +78,7 @@ struct RuntimeState {
     pending_fix: bool,
 }
 
-static RUNTIME: Mutex<RuntimeState> = Mutex::new(RuntimeState {
-    pending_fix: false,
-});
+static RUNTIME: Mutex<RuntimeState> = Mutex::new(RuntimeState { pending_fix: false });
 
 fn home_dir() -> PathBuf {
     dirs::home_dir().unwrap_or_else(|| PathBuf::from("/"))
@@ -238,8 +236,14 @@ fn utf16_le(s: &str) -> Vec<u8> {
 /// Replacement pairs (from → to) as Unicode strings; applied as UTF-8 and UTF-16-LE.
 fn replacement_pairs() -> Vec<(&'static str, &'static str)> {
     vec![
-        (r#"use_hidden_models\":true"#, r#"use_hidden_models\":false"#),
-        (r#"use_hidden_models\": true"#, r#"use_hidden_models\":false"#),
+        (
+            r#"use_hidden_models\":true"#,
+            r#"use_hidden_models\":false"#,
+        ),
+        (
+            r#"use_hidden_models\": true"#,
+            r#"use_hidden_models\":false"#,
+        ),
         (
             r#"use_hidden_models\":\"true"#,
             r#"use_hidden_models\":\"false"#,
@@ -250,7 +254,10 @@ fn replacement_pairs() -> Vec<(&'static str, &'static str)> {
         ),
         (r#"use_hidden_models":true"#, r#"use_hidden_models":false"#),
         (r#"use_hidden_models": true"#, r#"use_hidden_models":false"#),
-        (r#"use_hidden_models":"true"#, r#"use_hidden_models":"false"#),
+        (
+            r#"use_hidden_models":"true"#,
+            r#"use_hidden_models":"false"#,
+        ),
         (
             r#"use_hidden_models": "true"#,
             r#"use_hidden_models":"false"#,
@@ -367,13 +374,8 @@ fn copy_dir_recursive(src: &Path, dest: &Path) -> Result<(), String> {
         if from.is_dir() {
             copy_dir_recursive(&from, &to)?;
         } else {
-            fs::copy(&from, &to).map_err(|e| {
-                format!(
-                    "copy {} → {}: {e}",
-                    from.display(),
-                    to.display()
-                )
-            })?;
+            fs::copy(&from, &to)
+                .map_err(|e| format!("copy {} → {}: {e}", from.display(), to.display()))?;
         }
     }
     Ok(())
@@ -433,9 +435,8 @@ fn resolve_patch_script(app: Option<&AppHandle>) -> Option<PathBuf> {
         }
     }
     // Dev / source tree
-    candidates.push(
-        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("resources/picker_guard_patch.py"),
-    );
+    candidates
+        .push(PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("resources/picker_guard_patch.py"));
     candidates.push(
         home_dir().join("Documents/codex-provider-hub/src-tauri/resources/picker_guard_patch.py"),
     );
@@ -781,7 +782,10 @@ pub fn open_chatgpt_guarded(_app: AppHandle) -> Result<PickerGuardStatus, String
 }
 
 #[tauri::command]
-pub fn set_picker_guard_enabled(app: AppHandle, enabled: bool) -> Result<PickerGuardStatus, String> {
+pub fn set_picker_guard_enabled(
+    app: AppHandle,
+    enabled: bool,
+) -> Result<PickerGuardStatus, String> {
     let mut cfg = load_config(Some(&app));
     cfg.enabled = enabled;
     save_config(Some(&app), &cfg)?;
