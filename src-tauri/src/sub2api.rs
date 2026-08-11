@@ -457,11 +457,10 @@ pub fn begin_sub2api_browser_login() -> Result<BrowserLoginStatus, String> {
         .and_then(Value::as_str)
         .ok_or_else(|| "Sub2API 未返回 OAuth 会话 ID".to_string())?
         .to_string();
-    let state = data
-        .get("state")
-        .and_then(Value::as_str)
-        .ok_or_else(|| "Sub2API 未返回 OAuth state".to_string())?
-        .to_string();
+    // Sub2API v0.1.173 returns `auth_url` and `session_id`; `state` is
+    // intentionally embedded in the generated authorization URL.
+    let state = callback_query_value(&login_url, "state")
+        .ok_or_else(|| "授权链接缺少 OAuth state 参数".to_string())?;
     let id = Uuid::new_v4().to_string();
     *BROWSER_LOGIN.lock() = Some(BrowserLoginSession {
         id: id.clone(),
