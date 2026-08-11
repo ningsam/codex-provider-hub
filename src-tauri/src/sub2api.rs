@@ -1,11 +1,11 @@
 //! Sub2API OpenAI/Codex **OAuth** account-pool quotas (excludes apikey relays).
 
-use crate::gateway::sub2api_dir;
+use crate::gateway::{catalog_path_from_config, codex_config_path, sub2api_dir};
 use crate::http_util::{friendly_http_err, now_iso, BROWSER_UA, HTTP};
 use chrono::{DateTime, Utc};
 use parking_lot::Mutex;
 use serde::{Deserialize, Serialize};
-use serde_json::{json, Value};
+use serde_json::{json, Map, Value};
 use std::fs;
 use std::io::{Read, Write};
 use std::net::TcpListener;
@@ -176,6 +176,30 @@ fn admin_post(path: &str, payload: Value) -> Result<Value, String> {
     Ok(body)
 }
 
+fn admin_put(path: &str, payload: Value) -> Result<Value, String> {
+    let token = admin_login()?;
+    let resp = HTTP
+        .put(format!("{GATEWAY_BASE}{path}"))
+        .bearer_auth(&token)
+        .header("User-Agent", BROWSER_UA)
+        .json(&payload)
+        .send()
+        .map_err(|e| friendly_http_err(&format!("admin PUT {path}"), e))?;
+    let status = resp.status();
+    let body: Value = resp
+        .json()
+        .map_err(|e| format!("parse admin {path}: {e}"))?;
+    if !status.is_success() {
+        let message = body
+            .get("message")
+            .and_then(Value::as_str)
+            .or_else(|| body.pointer("/error/message").and_then(Value::as_str))
+            .unwrap_or("request failed");
+        return Err(format!("admin PUT {path} HTTP {status}: {message}"));
+    }
+    Ok(body)
+}
+
 fn admin_delete(path: &str) -> Result<(), String> {
     let token = admin_login()?;
     let resp = HTTP
@@ -319,7 +343,130 @@ fn list_oauth_accounts() -> Result<Vec<Value>, String> {
     Ok(out)
 }
 
+/// Strip a provider prefix from a catalog slug, returning the upstream model
+/// id when the remainder looks like a real OpenAI-family model name.
+///
+/// Catalog slugs are built as `{prefix}-{raw_model}` (see providers.rs), e.g.
+/// `sub2api-gpt-5.6-luna` → `gpt-5.6-luna`. Slugs without a recognizable
+/// model remainder (e.g. bare `gpt-5.6-sol`) return `None`.
+fn strip_provider_prefix(slug: &str) -> Option<String> {
+    let (_, rest) = slug.split_once('-')?;
+    let looks_like_model = ["gpt", "codex", "claude", "gemini", "grok", "o1", "o3"]
+        .iter()
+        .any(|needle| rest.contains(needle));
+    if looks_like_model {
+        Some(rest.to_string())
+    } else {
+        None
+    }
+}
+
+/// Collect the `{prefixed_slug -> upstream_model}` mapping an OAuth account
+/// needs so Codex catalog model names resolve upstream instead of being sent
+/// verbatim (which OpenAI rejects with 400, parking the account → 503).
+///
+/// Sources, in priority order:
+/// 1. `model_mapping` of every apikey relay account (already curated).
+/// 2. Prefix-stripped slugs from the active Codex model catalog.
+fn known_prefixed_model_mapping() -> Map<String, Value> {
+    let mut map = Map::new();
+
+    // 1) Copy mappings from apikey relay accounts.
+    if let Ok(body) = admin_get("/api/v1/admin/accounts?page=1&page_size=100") {
+        let items = body
+            .pointer("/data/items")
+            .and_then(|v| v.as_array())
+            .cloned()
+            .unwrap_or_default();
+        for acc in items {
+            if acc.get("type").and_then(|t| t.as_str()) != Some("apikey") {
+                continue;
+            }
+            if let Some(mapping) = acc
+                .pointer("/credentials/model_mapping")
+                .and_then(|v| v.as_object())
+            {
+                for (k, v) in mapping {
+                    map.entry(k.clone()).or_insert_with(|| v.clone());
+                }
+            }
+        }
+    }
+
+    // 2) Derive from the active Codex catalog by stripping provider prefixes.
+    if let Ok(raw) = fs::read_to_string(codex_config_path()) {
+        if let Ok(doc) = toml::from_str::<toml::Value>(&raw) {
+            let catalog_path = catalog_path_from_config(&doc);
+            if let Ok(text) = fs::read_to_string(&catalog_path) {
+                if let Ok(catalog) = serde_json::from_str::<Value>(&text) {
+                    if let Some(models) = catalog.get("models").and_then(|m| m.as_array()) {
+                        for model in models {
+                            if let Some(slug) = model.get("slug").and_then(|s| s.as_str()) {
+                                if let Some(raw_id) = strip_provider_prefix(slug) {
+                                    map.entry(slug.to_string())
+                                        .or_insert_with(|| Value::String(raw_id));
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    map
+}
+
+/// Merge the known prefixed-model mapping into one OAuth account.
+/// Returns how many entries were added. Existing keys are never overwritten.
+fn ensure_oauth_account_mapping(account_id: i64) -> Result<u32, String> {
+    let desired = known_prefixed_model_mapping();
+    if desired.is_empty() {
+        return Ok(0);
+    }
+    let body = admin_get(&format!("/api/v1/admin/accounts/{account_id}"))?;
+    let acc = body.get("data").cloned().unwrap_or(body);
+    if acc.get("type").and_then(|t| t.as_str()) != Some("oauth") {
+        return Ok(0);
+    }
+    let mut mapping = acc
+        .pointer("/credentials/model_mapping")
+        .and_then(|v| v.as_object())
+        .cloned()
+        .unwrap_or_default();
+    let mut added = 0u32;
+    for (key, value) in &desired {
+        if !mapping.contains_key(key) {
+            mapping.insert(key.clone(), value.clone());
+            added += 1;
+        }
+    }
+    if added == 0 {
+        return Ok(0);
+    }
+    admin_put(
+        &format!("/api/v1/admin/accounts/{account_id}"),
+        json!({ "credentials": { "model_mapping": mapping } }),
+    )?;
+    Ok(added)
+}
+
+/// Best-effort self-heal: make sure every OAuth pool account carries the
+/// prefixed-model mapping. Never fails the caller — returns added count.
+fn heal_oauth_account_mappings() -> u32 {
+    let mut total = 0u32;
+    if let Ok(accounts) = list_oauth_accounts() {
+        for acc in accounts {
+            if let Some(id) = acc.get("id").and_then(|v| v.as_i64()) {
+                total += ensure_oauth_account_mapping(id).unwrap_or(0);
+            }
+        }
+    }
+    total
+}
+
 fn validate_import_path(path: &Path) -> Result<(), String> {
+
     let extension = path
         .extension()
         .and_then(|ext| ext.to_str())
@@ -434,6 +581,13 @@ pub fn import_sub2api_file(file_path: String, name: Option<String>) -> Result<Su
             .map(str::trim)
             .unwrap_or("Sub2API 未接受该导入文件");
         return Err(format!("导入失败: {safe_message}"));
+    }
+    // Self-heal: imported OAuth accounts need prefixed-model mappings,
+    // otherwise OpenAI rejects catalog slugs and the pool 503s.
+    let healed = heal_oauth_account_mappings();
+    let mut result = result;
+    if healed > 0 {
+        result.summary = format!("导入完成，并为 OAuth 账号补齐 {healed} 条模型映射。");
     }
     crate::http_util::invalidate_cache("sub2api_usage");
     Ok(result)
@@ -614,13 +768,28 @@ pub fn complete_sub2api_browser_login(
         .or_else(|| data.get("name").and_then(Value::as_str))
         .unwrap_or("新 OAuth 账号")
         .to_string();
+    let account_id = data
+        .pointer("/account/id")
+        .and_then(Value::as_i64)
+        .or_else(|| data.get("id").and_then(Value::as_i64));
+    // Without a prefixed-model mapping, OpenAI rejects catalog slugs verbatim
+    // (400) and Sub2API parks the account, so the whole pool 503s.
+    let mapped = match account_id {
+        Some(id) => ensure_oauth_account_mapping(id).unwrap_or(0),
+        None => heal_oauth_account_mappings(),
+    };
+    let message = if mapped > 0 {
+        format!("OpenAI/Codex OAuth 账号已导入，并配置 {mapped} 条模型映射。")
+    } else {
+        "OpenAI/Codex OAuth 账号已导入。".to_string()
+    };
     *BROWSER_LOGIN.lock() = None;
     crate::http_util::invalidate_cache("sub2api_usage");
     Ok(BrowserLoginStatus {
         session_id: None,
         login_url: browser_login_url(),
         state: "complete".into(),
-        message: "OpenAI/Codex OAuth 账号已导入。".into(),
+        message,
         imported_accounts: vec![account_name],
     })
 }
@@ -781,6 +950,26 @@ pub fn delete_sub2api_account(account_id: i64) -> Result<(), String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn strips_provider_prefix_only_for_model_slugs() {
+        assert_eq!(
+            strip_provider_prefix("sub2api-gpt-5.6-luna"),
+            Some("gpt-5.6-luna".to_string())
+        );
+        assert_eq!(
+            strip_provider_prefix("aihub-claude-opus-5"),
+            Some("claude-opus-5".to_string())
+        );
+        assert_eq!(
+            strip_provider_prefix("anyrouter-gpt-5.6-sol"),
+            Some("gpt-5.6-sol".to_string())
+        );
+        // Bare upstream ids and non-model slugs are left alone.
+        assert_eq!(strip_provider_prefix("gpt-5.6-sol"), None);
+        assert_eq!(strip_provider_prefix("no-dash"), None);
+        assert_eq!(strip_provider_prefix("my-relay-name"), None);
+    }
 
     #[test]
     fn accepts_supported_small_import_files_only() {
