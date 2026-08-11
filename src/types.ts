@@ -42,8 +42,9 @@ export interface Sub2ApiAccountQuota {
 }
 
 export interface Sub2ApiUsage {
-  fiveHour: QuotaWindow;
-  sevenDay: QuotaWindow;
+  /** null when no OAuth account reports an active window */
+  fiveHour: QuotaWindow | null;
+  sevenDay: QuotaWindow | null;
   /** OAuth only — excludes AIHub/AnyRouter apikey relays */
   poolTotal: number;
   poolAvailable: number;

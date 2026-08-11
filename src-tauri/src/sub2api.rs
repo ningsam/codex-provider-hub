@@ -56,9 +56,10 @@ pub struct Sub2ApiAccountQuota {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Sub2ApiUsage {
-    /// Average across OAuth accounts that still report a 5h window (includes errored if known).
-    pub five_hour: QuotaWindow,
-    pub seven_day: QuotaWindow,
+    /// Average across OAuth accounts with an active 5h window; `None` when no
+    /// account reports one (upstream simply has no such window).
+    pub five_hour: Option<QuotaWindow>,
+    pub seven_day: Option<QuotaWindow>,
     /// OAuth accounts only (apikey relays like AIHub/AnyRouter are excluded).
     pub pool_total: u32,
     pub pool_available: u32,
@@ -238,6 +239,12 @@ fn window_from_usage(node: &Value) -> Option<QuotaWindow> {
         .and_then(|v| v.as_u64())
         .or_else(|| node.get("reset_after_seconds").and_then(|v| v.as_u64()))
         .unwrap_or(0);
+    // A window with no time left is not a real active window — Sub2API emits
+    // phantom nodes (utilization 0, resets_at in the past) when upstream does
+    // not report that window at all. Treat them as "no data".
+    if reset == 0 {
+        return None;
+    }
     Some(QuotaWindow {
         remaining_percent: remaining,
         reset_after_seconds: reset,
@@ -267,12 +274,9 @@ fn normalize_status(raw: &str, error_message: &str) -> String {
     }
 }
 
-fn avg_window(windows: &[QuotaWindow]) -> QuotaWindow {
+fn avg_window(windows: &[QuotaWindow]) -> Option<QuotaWindow> {
     if windows.is_empty() {
-        return QuotaWindow {
-            remaining_percent: 0.0,
-            reset_after_seconds: 0,
-        };
+        return None;
     }
     let n = windows.len() as f64;
     let remaining = windows.iter().map(|w| w.remaining_percent).sum::<f64>() / n;
@@ -281,10 +285,10 @@ fn avg_window(windows: &[QuotaWindow]) -> QuotaWindow {
         .map(|w| w.reset_after_seconds)
         .min()
         .unwrap_or(0);
-    QuotaWindow {
+    Some(QuotaWindow {
         remaining_percent: remaining,
         reset_after_seconds: reset,
-    }
+    })
 }
 
 fn fetch_account_usage(id: i64) -> (Option<QuotaWindow>, Option<QuotaWindow>) {
@@ -840,22 +844,40 @@ pub fn fetch_sub2api_usage() -> Result<Sub2ApiUsage, String> {
         };
 
         // Prefer usage endpoint; fall back to account.extra codex_* fields if present.
+        // Skip the fallback when the account reports no such window at all
+        // (window_minutes == 0), otherwise phantom 100% / reset 0 windows show up.
+        // extra semantics: primary window = 7d, secondary window = 5h.
+        let window_minutes = |key: &str| {
+            a.pointer(&format!("/extra/{key}"))
+                .and_then(|v| v.as_f64())
+                .unwrap_or(0.0)
+        };
         let five_hour = five_hour.or_else(|| {
+            if window_minutes("codex_5h_window_minutes") <= 0.0
+                && window_minutes("codex_secondary_window_minutes") <= 0.0
+            {
+                return None;
+            }
             let used = a
                 .pointer("/extra/codex_5h_used_percent")
                 .and_then(|v| v.as_f64())?;
             Some(QuotaWindow {
                 remaining_percent: (100.0 - used).clamp(0.0, 100.0),
-                reset_after_seconds: 0,
+                reset_after_seconds: window_minutes("codex_5h_reset_after_seconds") as u64,
             })
         });
         let seven_day = seven_day.or_else(|| {
+            if window_minutes("codex_7d_window_minutes") <= 0.0
+                && window_minutes("codex_primary_window_minutes") <= 0.0
+            {
+                return None;
+            }
             let used = a
                 .pointer("/extra/codex_7d_used_percent")
                 .and_then(|v| v.as_f64())?;
             Some(QuotaWindow {
                 remaining_percent: (100.0 - used).clamp(0.0, 100.0),
-                reset_after_seconds: 0,
+                reset_after_seconds: window_minutes("codex_7d_reset_after_seconds") as u64,
             })
         });
 
@@ -950,6 +972,22 @@ pub fn delete_sub2api_account(account_id: i64) -> Result<(), String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn phantom_window_without_time_left_is_no_data() {
+        // Sub2API emits this shape when upstream reports no such window.
+        let phantom = json!({
+            "utilization": 0,
+            "resets_at": "2026-08-11T16:06:06+08:00",
+            "remaining_seconds": 0
+        });
+        assert!(window_from_usage(&phantom).is_none());
+        let real = json!({ "utilization": 14, "remaining_seconds": 603268 });
+        let w = window_from_usage(&real).expect("real window");
+        assert_eq!(w.remaining_percent, 86.0);
+        assert_eq!(w.reset_after_seconds, 603268);
+        assert!(window_from_usage(&Value::Null).is_none());
+    }
 
     #[test]
     fn strips_provider_prefix_only_for_model_slugs() {

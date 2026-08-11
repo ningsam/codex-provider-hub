@@ -195,13 +195,27 @@ fn tray_label_from_metrics() -> (String, String) {
                     u.pool_available, u.pool_total, errored
                 ));
             } else {
-                let pct = u.five_hour.remaining_percent;
-                title = format!("{pct:.0}%");
+                // Tray title prefers the 5h window; fall back to 7d when no
+                // account reports an active 5h window.
+                let pct = u
+                    .five_hour
+                    .as_ref()
+                    .or(u.seven_day.as_ref())
+                    .map(|w| w.remaining_percent);
+                title = pct.map(|p| format!("{p:.0}%")).unwrap_or_else(|| "—".into());
+                let fmt_window = |label: &str, w: &Option<sub2api::QuotaWindow>| {
+                    w.as_ref()
+                        .map(|w| format!("{label} {:.0}%", w.remaining_percent))
+                        .unwrap_or_else(|| format!("{label} 无窗口"))
+                };
                 tip_parts.push(format!(
-                    "OAuth {}/{} · 5h {pct:.0}% · 7d {:.0}%",
-                    u.pool_available, u.pool_total, u.seven_day.remaining_percent
+                    "OAuth {}/{} · {} · {}",
+                    u.pool_available,
+                    u.pool_total,
+                    fmt_window("5h", &u.five_hour),
+                    fmt_window("7d", &u.seven_day)
                 ));
-                if pct < 20.0 || errored > 0 {
+                if pct.map(|p| p < 20.0).unwrap_or(false) || errored > 0 {
                     warn = true;
                 }
             }

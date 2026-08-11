@@ -296,18 +296,22 @@ export function Sub2ApiCard() {
         </div>
       </div>
 
-      {data && data.poolAvailable > 0 ? (
+      {data && data.poolAvailable > 0 && (data.fiveHour || data.sevenDay) ? (
         <div className="account-mini-meters summary-meters">
-          <ProgressBar
-            value={data.fiveHour.remainingPercent}
-            invertTone
-            label={`可用号平均 5h ${data.fiveHour.remainingPercent.toFixed(0)}% · reset ${formatDuration(data.fiveHour.resetAfterSeconds)}`}
-          />
-          <ProgressBar
-            value={data.sevenDay.remainingPercent}
-            invertTone
-            label={`可用号平均 7d ${data.sevenDay.remainingPercent.toFixed(0)}% · reset ${formatDuration(data.sevenDay.resetAfterSeconds)}`}
-          />
+          {data.fiveHour ? (
+            <ProgressBar
+              value={data.fiveHour.remainingPercent}
+              invertTone
+              label={`可用号平均 5h ${data.fiveHour.remainingPercent.toFixed(0)}% · reset ${formatDuration(data.fiveHour.resetAfterSeconds)}`}
+            />
+          ) : null}
+          {data.sevenDay ? (
+            <ProgressBar
+              value={data.sevenDay.remainingPercent}
+              invertTone
+              label={`可用号平均 7d ${data.sevenDay.remainingPercent.toFixed(0)}% · reset ${formatDuration(data.sevenDay.resetAfterSeconds)}`}
+            />
+          ) : null}
         </div>
       ) : null}
 
