@@ -50,6 +50,8 @@ export interface Sub2ApiAccountQuota {
   id: number;
   name: string;
   email: string;
+  /** oauth | relay | apikey | … */
+  accountType: string;
   /** ready | error | inactive | … */
   status: string;
   errorMessage: string;

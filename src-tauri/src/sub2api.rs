@@ -112,6 +112,8 @@ pub struct Sub2ApiAccountQuota {
     pub id: i64,
     pub name: String,
     pub email: String,
+    /// oauth | relay | apikey | …
+    pub account_type: String,
     /// Normalized: `ready` | `error` | `inactive` | other raw status.
     pub status: String,
     pub error_message: String,
@@ -2894,6 +2896,11 @@ pub fn fetch_sub2api_usage() -> Result<Sub2ApiUsage, String> {
             .or_else(|| a.get("email").and_then(|v| v.as_str()))
             .unwrap_or("")
             .to_string();
+        let account_type = a
+            .get("type")
+            .and_then(|v| v.as_str())
+            .unwrap_or("unknown")
+            .to_string();
         let raw_status = a.get("status").and_then(|v| v.as_str()).unwrap_or("");
         let raw_error_message = a
             .get("error_message")
@@ -2959,6 +2966,7 @@ pub fn fetch_sub2api_usage() -> Result<Sub2ApiUsage, String> {
             id,
             name,
             email,
+            account_type,
             status,
             error_message,
             five_hour,
@@ -3324,6 +3332,7 @@ mod tests {
             id,
             name: format!("OAuth {id}"),
             email: format!("oauth-{id}@example.test"),
+            account_type: "oauth".into(),
             status: if available { "ready" } else { "error" }.into(),
             error_message: String::new(),
             five_hour: None,

@@ -219,7 +219,21 @@ function AccountMiniCard({
     >
       <header className="account-mini-head">
         <div className="account-mini-copy">
-          <div className="account-mini-name">{account.name}</div>
+          <div className="account-mini-name">
+            {account.name}
+            <span style={{
+              marginLeft: '8px',
+              fontSize: '11px',
+              padding: '2px 6px',
+              borderRadius: '4px',
+              background: account.accountType === 'oauth' ? '#e3f2fd' : '#fff3e0',
+              color: account.accountType === 'oauth' ? '#1976d2' : '#f57c00',
+              fontWeight: 600,
+              textTransform: 'uppercase'
+            }}>
+              {account.accountType}
+            </span>
+          </div>
           {account.email ? (
             <div className="account-mini-email mono">{account.email}</div>
           ) : null}
