@@ -4,6 +4,14 @@ import { CardShell } from "../components/CardShell";
 
 export type CodexChannel = "official" | "sub2api" | "mixed";
 
+export interface OfficialAccountInfo {
+  email: string;
+  name: string | null;
+  picture: string | null;
+  hasActiveSubscription: boolean;
+  subscriptionPlan: string | null;
+}
+
 export interface ChannelSwitchStatus {
   current: CodexChannel;
   modelProvider: string;
@@ -14,6 +22,7 @@ export interface ChannelSwitchStatus {
   sub2apiProfileSaved: boolean;
   lastSwitchedAt: string | null;
   configConsistent: boolean;
+  officialAccount: OfficialAccountInfo | null;
 }
 
 interface ChannelSwitchResult {
@@ -71,7 +80,7 @@ export function ChannelSwitchCard() {
     const name = labels[target];
     if (
       !window.confirm(
-        `切换到「${name}」？\nHub 会先备份 auth.json 与 config.toml，完成后需要重启 Codex。`,
+        `切换到「${name}」？\n\nHub 会先备份 auth.json 与 config.toml，完成后自动重启 Codex 应用，立即可用。`,
       )
     ) {
       return;
@@ -80,16 +89,29 @@ export function ChannelSwitchCard() {
     setError(null);
     setHint(null);
     try {
+      // Step 1: Switch channel
       const result = await invoke<ChannelSwitchResult>(
         "switch_codex_channel",
         { target },
       );
       setStatus(result.status);
-      setRestartReady(true);
       setHint(`${result.message}（已生成两份带时间戳备份）`);
       setRefreshedAt(new Date().toISOString());
+
+      // Step 2: Auto-restart Codex
+      await new Promise(resolve => setTimeout(resolve, 500)); // Brief pause
+      setHint("正在重启 Codex 应用...");
+
+      const restartResult = await invoke<CodexRestartResult>("restart_codex_app");
+      setHint(`✓ 切换完成：${result.message}\n✓ ${restartResult.message}\n\n现在可以在 Codex 中使用新渠道。`);
+      setRestartReady(false);
+
+      // Auto-refresh status after restart
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      await refresh();
     } catch (err) {
       setError(readableError(err));
+      setRestartReady(true); // Allow manual restart on error
     } finally {
       setBusy(false);
     }
@@ -111,6 +133,9 @@ export function ChannelSwitchCard() {
   };
 
   const current = status?.current ?? "mixed";
+  const isOfficial = current === "official";
+  const isSub2api = current === "sub2api";
+
   return (
     <CardShell
       className="card-span-2"
@@ -147,46 +172,101 @@ export function ChannelSwitchCard() {
         </p>
       ) : null}
 
+      {/* Current Channel Display */}
+      <div style={{
+        padding: '16px',
+        background: isOfficial ? '#e8f5e9' : isSub2api ? '#e3f2fd' : '#fff3e0',
+        borderRadius: '8px',
+        marginBottom: '16px',
+        border: `2px solid ${isOfficial ? '#4caf50' : isSub2api ? '#2196f3' : '#ff9800'}`
+      }}>
+        <div style={{ fontSize: '14px', fontWeight: 600, marginBottom: '8px', color: '#666' }}>
+          🎯 当前使用渠道
+        </div>
+        <div style={{ fontSize: '20px', fontWeight: 700, marginBottom: '4px' }}>
+          {labels[current]}
+        </div>
+        <div className="mono" style={{ fontSize: '13px', color: '#666' }}>
+          {status?.model || "—"}
+        </div>
+      </div>
+
+      {/* Official Account Info */}
+      {status?.officialAccount && isOfficial ? (
+        <div style={{
+          padding: '16px',
+          background: '#f5f5f5',
+          borderRadius: '8px',
+          marginBottom: '16px'
+        }}>
+          <div style={{ fontSize: '14px', fontWeight: 600, marginBottom: '12px', color: '#666' }}>
+            👤 ChatGPT 官方账号
+          </div>
+          <dl className="kv-grid">
+            <div>
+              <dt>邮箱</dt>
+              <dd className="mono" style={{ fontSize: '13px' }}>
+                {status.officialAccount.email}
+              </dd>
+            </div>
+            {status.officialAccount.name ? (
+              <div>
+                <dt>姓名</dt>
+                <dd>{status.officialAccount.name}</dd>
+              </div>
+            ) : null}
+            <div>
+              <dt>订阅状态</dt>
+              <dd>
+                {status.officialAccount.hasActiveSubscription ? (
+                  <span style={{ color: '#4caf50', fontWeight: 600 }}>
+                    ✓ {status.officialAccount.subscriptionPlan || 'Active'}
+                  </span>
+                ) : (
+                  <span style={{ color: '#999' }}>Free</span>
+                )}
+              </dd>
+            </div>
+          </dl>
+        </div>
+      ) : null}
+
       <dl className="kv-grid">
         <div>
-          <dt>当前通道</dt>
-          <dd>{status ? labels[current] : "—"}</dd>
-        </div>
-        <div>
-          <dt>模型</dt>
-          <dd className="mono">{status?.model || "—"}</dd>
-        </div>
-        <div>
-          <dt>认证</dt>
+          <dt>认证模式</dt>
           <dd className="mono">{status?.authMode || "—"}</dd>
+        </div>
+        <div>
+          <dt>模型提供商</dt>
+          <dd className="mono">{status?.modelProvider || "—"}</dd>
         </div>
       </dl>
 
       <p className="muted-line">
-        Profiles：官方 {status?.officialProfileSaved ? "已保存" : "待首次切换"}
-        {" · "}网关 {status?.sub2apiProfileSaved ? "已保存" : "待首次切换"}
+        Profiles：官方 {status?.officialProfileSaved ? "✓" : "待首次切换"}
+        {" · "}网关 {status?.sub2apiProfileSaved ? "✓" : "待首次切换"}
       </p>
 
       <div className="card-inline-actions">
         <button
           type="button"
-          className="btn ghost"
+          className={isOfficial && status?.configConsistent ? "btn primary" : "btn ghost"}
           disabled={
             busy || (current === "official" && status?.configConsistent === true)
           }
           onClick={() => void switchTo("official")}
         >
-          切到官方直连
+          {isOfficial ? "✓ 官方直连" : "切到官方直连"}
         </button>
         <button
           type="button"
-          className="btn primary"
+          className={isSub2api && status?.configConsistent ? "btn primary" : "btn ghost"}
           disabled={
             busy || (current === "sub2api" && status?.configConsistent === true)
           }
           onClick={() => void switchTo("sub2api")}
         >
-          切到 Sub2API
+          {isSub2api ? "✓ Sub2API" : "切到 Sub2API"}
         </button>
         <button
           type="button"

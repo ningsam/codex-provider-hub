@@ -53,6 +53,17 @@ pub struct ChannelSwitchStatus {
     pub sub2api_profile_saved: bool,
     pub last_switched_at: Option<String>,
     pub config_consistent: bool,
+    pub official_account: Option<OfficialAccountInfo>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct OfficialAccountInfo {
+    pub email: String,
+    pub name: Option<String>,
+    pub picture: Option<String>,
+    pub has_active_subscription: bool,
+    pub subscription_plan: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -664,6 +675,54 @@ fn commit_pair(
     Ok(())
 }
 
+fn extract_official_account(auth: &JsonValue) -> Option<OfficialAccountInfo> {
+    let user = auth.get("user").and_then(JsonValue::as_object)?;
+    let email = user.get("email").and_then(JsonValue::as_str)?;
+
+    let name = user.get("name").and_then(JsonValue::as_str).map(String::from);
+    let picture = user.get("picture").and_then(JsonValue::as_str).map(String::from);
+
+    // Check for active subscription from accounts array
+    let accounts = auth.get("accounts").and_then(JsonValue::as_array);
+    let (has_active_subscription, subscription_plan) = if let Some(accounts) = accounts {
+        let mut has_sub = false;
+        let mut plan_name = None;
+
+        for account in accounts {
+            if let Some(obj) = account.as_object() {
+                // Check for ChatGPT Plus/Team/Enterprise indicators
+                if let Some(account_obj) = obj.get("account").and_then(JsonValue::as_object) {
+                    let plan_type = account_obj.get("plan_type").and_then(JsonValue::as_str);
+
+                    if let Some(plan) = plan_type {
+                        if plan != "free" && !plan.is_empty() {
+                            has_sub = true;
+                            plan_name = Some(match plan {
+                                "plus" => "ChatGPT Plus",
+                                "team" => "ChatGPT Team",
+                                "enterprise" => "ChatGPT Enterprise",
+                                other => other,
+                            }.to_string());
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        (has_sub, plan_name)
+    } else {
+        (false, None)
+    };
+
+    Some(OfficialAccountInfo {
+        email: email.to_string(),
+        name,
+        picture,
+        has_active_subscription,
+        subscription_plan,
+    })
+}
+
 fn status_from_docs(
     auth: &JsonValue,
     config: &toml::Value,
@@ -691,6 +750,13 @@ fn status_from_docs(
         }
         ActiveChannel::Mixed => false,
     };
+
+    let official_account = if current == ActiveChannel::Official {
+        extract_official_account(auth)
+    } else {
+        None
+    };
+
     ChannelSwitchStatus {
         current,
         model_provider: toml_string(config, "model_provider").to_string(),
@@ -701,6 +767,7 @@ fn status_from_docs(
         sub2api_profile_saved: profiles.sub2api.is_some(),
         last_switched_at: profiles.last_switched_at.clone(),
         config_consistent: consistent,
+        official_account,
     }
 }
 
