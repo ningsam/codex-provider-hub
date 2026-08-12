@@ -249,21 +249,33 @@ function AccountMiniCard({
       {account.available || five != null || seven != null ? (
         <div className="account-mini-meters">
           <ProgressBar
-            value={five ?? 0}
+            value={
+              officialProbe?.fiveHour
+                ? Math.max(0, 100 - officialProbe.fiveHour.usedPercent)
+                : five ?? 0
+            }
             invertTone
             label={
-              five == null
-                ? "本地 5h · 无数据"
-                : `本地 5h 已用 ${fiveUsed?.toFixed(0)}% · reset ${formatDuration(account.fiveHour?.resetAfterSeconds ?? 0)}`
+              officialProbe?.fiveHour
+                ? `5h 已用 ${officialProbe.fiveHour.usedPercent.toFixed(0)}%${officialProbe.fiveHour.limitReached ? " · LIMIT" : ""} · reset ${formatDuration(officialProbe.fiveHour.resetAfterSeconds)}`
+                : five == null
+                  ? "5h · 无数据"
+                  : `5h 已用 ${fiveUsed?.toFixed(0)}% · reset ${formatDuration(account.fiveHour?.resetAfterSeconds ?? 0)}`
             }
           />
           <ProgressBar
-            value={seven ?? 0}
+            value={
+              officialProbe?.sevenDay
+                ? Math.max(0, 100 - officialProbe.sevenDay.usedPercent)
+                : seven ?? 0
+            }
             invertTone
             label={
-              seven == null
-                ? "本地 7d · 无数据"
-                : `本地 7d 已用 ${sevenUsed?.toFixed(0)}% · reset ${formatDuration(account.sevenDay?.resetAfterSeconds ?? 0)}`
+              officialProbe?.sevenDay
+                ? `7d 已用 ${officialProbe.sevenDay.usedPercent.toFixed(0)}%${officialProbe.sevenDay.limitReached ? " · LIMIT" : ""} · reset ${formatDuration(officialProbe.sevenDay.resetAfterSeconds)}`
+                : seven == null
+                  ? "7d · 无数据"
+                  : `7d 已用 ${sevenUsed?.toFixed(0)}% · reset ${formatDuration(account.sevenDay?.resetAfterSeconds ?? 0)}`
             }
           />
         </div>
@@ -271,35 +283,11 @@ function AccountMiniCard({
         <p className="muted-line">此账号无 5h/7d 额度窗口（可能已失效）</p>
       )}
 
-      {officialProbe ? (
-        <div
-          className={`official-quota ${officialUnavailable ? "is-exhausted" : ""}`}
-          role="status"
-        >
-          <div className="official-quota-head">
-            <strong>官方实测 · {officialProbe.planType}</strong>
-            <span>{officialUnavailable ? "官方不可用" : "官方可用"}</span>
-          </div>
-          {officialUnavailableReason ? (
-            <p className="account-mini-error">{officialUnavailableReason}</p>
-          ) : null}
-          <div className="account-mini-meters">
-            {officialProbe.fiveHour ? (
-              <ProgressBar
-                value={Math.max(0, 100 - officialProbe.fiveHour.usedPercent)}
-                invertTone
-                label={`官方 5h 已用 ${officialProbe.fiveHour.usedPercent.toFixed(0)}%${officialProbe.fiveHour.limitReached ? " · LIMIT REACHED" : ""} · reset ${formatDuration(officialProbe.fiveHour.resetAfterSeconds)}`}
-              />
-            ) : null}
-            {officialProbe.sevenDay ? (
-              <ProgressBar
-                value={Math.max(0, 100 - officialProbe.sevenDay.usedPercent)}
-                invertTone
-                label={`官方 7d 已用 ${officialProbe.sevenDay.usedPercent.toFixed(0)}%${officialProbe.sevenDay.limitReached ? " · LIMIT REACHED" : ""} · reset ${formatDuration(officialProbe.sevenDay.resetAfterSeconds)}`}
-              />
-            ) : null}
-          </div>
-        </div>
+      {officialProbe && (officialUnavailableReason || officialProbe.planType) ? (
+        <p className="muted-line" style={{ marginTop: '8px' }}>
+          {officialProbe.planType ? `✓ 官方实测 · ${officialProbe.planType}` : ''}
+          {officialUnavailableReason ? ` · ${officialUnavailableReason}` : ''}
+        </p>
       ) : null}
 
       {officialError ? <p className="account-mini-error">官方探测：{officialError}</p> : null}
