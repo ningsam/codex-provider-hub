@@ -1,0 +1,488 @@
+.route-doctor-card {
+  --doctor-surface: rgba(255, 255, 255, 0.025);
+  --doctor-surface-raised: rgba(255, 255, 255, 0.045);
+}
+
+.route-doctor-health,
+.route-doctor-severity,
+.route-doctor-count {
+  display: inline-flex;
+  align-items: center;
+  min-height: 22px;
+  padding: 2px 8px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-family: var(--mono);
+  font-size: 0.66rem;
+  font-weight: 600;
+  line-height: 1.35;
+  letter-spacing: 0.04em;
+}
+
+.route-doctor-health.is-healthy {
+  color: var(--ok);
+  border-color: rgba(94, 200, 192, 0.32);
+  background: rgba(94, 200, 192, 0.08);
+}
+
+.route-doctor-health.is-critical {
+  color: var(--danger);
+  border-color: rgba(224, 120, 120, 0.34);
+  background: rgba(224, 120, 120, 0.08);
+}
+
+.route-doctor-probe-button {
+  color: var(--warn) !important;
+  border-color: rgba(212, 176, 106, 0.28) !important;
+}
+
+.route-doctor-safety {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 36px;
+  padding: 8px 10px;
+  border: 1px solid rgba(94, 200, 192, 0.18);
+  border-radius: var(--radius-sm);
+  color: var(--muted);
+  background: rgba(94, 200, 192, 0.045);
+  font-size: 0.76rem;
+  line-height: 1.45;
+}
+
+.route-doctor-safety code,
+.route-doctor-plan code,
+.route-doctor-finding code {
+  font-family: var(--mono);
+}
+
+.route-doctor-safety-dot {
+  width: 7px;
+  height: 7px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: var(--ok);
+  box-shadow: 0 0 0 3px rgba(94, 200, 192, 0.1);
+}
+
+.route-doctor-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+}
+
+.route-doctor-summary > div {
+  min-width: 0;
+  padding: 11px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--doctor-surface);
+}
+
+.route-doctor-summary dt {
+  margin-bottom: 6px;
+  color: var(--muted-2);
+  font-size: 0.66rem;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.route-doctor-summary dd {
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  color: var(--text);
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.route-doctor-summary dd.route-doctor-model {
+  font-size: 0.82rem;
+}
+
+.route-doctor-summary span {
+  display: block;
+  margin-top: 4px;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 0.68rem;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.route-doctor-section,
+.route-doctor-plan {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.route-doctor-section-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.route-doctor-kicker {
+  margin: 0 0 3px;
+  color: var(--muted-2);
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.route-doctor-section-head h3 {
+  margin: 0;
+  color: var(--text);
+  font-size: 0.92rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.route-doctor-count {
+  color: var(--muted);
+  background: var(--doctor-surface);
+}
+
+.route-doctor-findings,
+.route-doctor-probes {
+  display: grid;
+  gap: 8px;
+}
+
+.route-doctor-finding {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  min-width: 0;
+  padding: 11px 11px 11px 15px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: rgba(0, 0, 0, 0.16);
+}
+
+.route-doctor-finding-rail {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  background: var(--muted-2);
+}
+
+.route-doctor-finding.severity-critical .route-doctor-finding-rail {
+  background: var(--danger);
+}
+
+.route-doctor-finding.severity-warning .route-doctor-finding-rail {
+  background: var(--warn);
+}
+
+.route-doctor-finding.severity-info .route-doctor-finding-rail {
+  background: var(--accent-2);
+}
+
+.route-doctor-finding-copy {
+  min-width: 0;
+}
+
+.route-doctor-finding-meta {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+
+.route-doctor-finding-meta > code {
+  overflow: hidden;
+  color: var(--muted-2);
+  font-size: 0.62rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.route-doctor-severity.severity-critical {
+  color: var(--danger);
+  border-color: rgba(224, 120, 120, 0.28);
+}
+
+.route-doctor-severity.severity-warning {
+  color: var(--warn);
+  border-color: rgba(212, 176, 106, 0.28);
+}
+
+.route-doctor-severity.severity-info {
+  color: var(--accent-2);
+  border-color: rgba(106, 168, 232, 0.28);
+}
+
+.route-doctor-finding h4 {
+  margin: 7px 0 4px;
+  color: var(--text);
+  font-size: 0.86rem;
+  font-weight: 600;
+}
+
+.route-doctor-finding p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.75rem;
+  line-height: 1.55;
+}
+
+.route-doctor-finding small {
+  display: block;
+  margin-top: 7px;
+  color: var(--muted-2);
+  font-size: 0.64rem;
+}
+
+.route-doctor-finding-action {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.route-doctor-finding-action > span {
+  color: var(--muted-2);
+  font-size: 0.68rem;
+}
+
+.route-doctor-empty {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid rgba(94, 200, 192, 0.2);
+  border-radius: var(--radius-sm);
+  background: rgba(94, 200, 192, 0.045);
+}
+
+.route-doctor-empty > span {
+  display: grid;
+  width: 26px;
+  height: 26px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 50%;
+  color: #061412;
+  background: var(--ok);
+  font-weight: 700;
+}
+
+.route-doctor-empty strong {
+  color: var(--text);
+  font-size: 0.82rem;
+}
+
+.route-doctor-empty p {
+  margin: 3px 0 0;
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
+.route-doctor-plan {
+  padding: 13px;
+  border: 1px solid rgba(224, 120, 120, 0.22);
+  border-radius: var(--radius-sm);
+  background: rgba(224, 120, 120, 0.035);
+}
+
+.route-doctor-plan-summary,
+.route-doctor-plan-warning {
+  margin: 0;
+  font-size: 0.76rem;
+  line-height: 1.5;
+}
+
+.route-doctor-plan-summary {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.route-doctor-plan-warning {
+  color: var(--warn);
+}
+
+.route-doctor-changes {
+  display: grid;
+  gap: 6px;
+}
+
+.route-doctor-changes > div {
+  display: grid;
+  grid-template-columns: minmax(160px, 0.85fr) minmax(0, 1.15fr);
+  gap: 10px;
+  align-items: center;
+  min-width: 0;
+  padding: 8px 9px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.route-doctor-changes span,
+.route-doctor-changes code {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: var(--muted);
+  font-size: 0.66rem;
+}
+
+.route-doctor-changes code {
+  color: var(--text);
+}
+
+.route-doctor-changes b {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.route-doctor-confirm {
+  display: grid;
+  gap: 7px;
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
+.route-doctor-confirm code {
+  color: var(--text);
+}
+
+.route-doctor-confirm input {
+  min-height: 38px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  outline: none;
+  color: var(--text);
+  background: var(--bg-0);
+  font-family: var(--mono);
+  font-size: 0.74rem;
+}
+
+.route-doctor-confirm input:focus-visible {
+  border-color: rgba(106, 168, 232, 0.64);
+  box-shadow: 0 0 0 3px rgba(106, 168, 232, 0.12);
+}
+
+.route-doctor-apply {
+  align-self: flex-start;
+  min-height: 38px;
+}
+
+.route-doctor-probes {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.route-doctor-probes > article {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--doctor-surface);
+}
+
+.route-doctor-probe-name {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+
+.route-doctor-probe-name strong {
+  color: var(--text);
+  font-size: 0.8rem;
+}
+
+.route-doctor-probe-name span {
+  overflow: hidden;
+  color: var(--muted-2);
+  font-size: 0.62rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.route-doctor-probe-checks {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.route-doctor-probe-checks > div {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  padding: 7px 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: rgba(0, 0, 0, 0.16);
+}
+
+.route-doctor-probe-checks span,
+.route-doctor-probe-checks small {
+  overflow: hidden;
+  color: var(--muted-2);
+  font-size: 0.62rem;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.route-doctor-probe-checks strong {
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 0.78rem;
+}
+
+@media (max-width: 760px) {
+  .route-doctor-summary,
+  .route-doctor-probes {
+    grid-template-columns: 1fr;
+  }
+
+  .route-doctor-finding {
+    grid-template-columns: 1fr;
+  }
+
+  .route-doctor-finding-action {
+    justify-content: flex-start;
+  }
+
+  .route-doctor-changes > div {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+}
+
+@media (max-width: 560px) {
+  .route-doctor-card .card-head-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .route-doctor-probe-button {
+    white-space: normal;
+  }
+
+  .route-doctor-probe-checks {
+    grid-template-columns: 1fr;
+  }
+
+  .route-doctor-apply,
+  .route-doctor-finding-action .btn {
+    width: 100%;
+  }
+}

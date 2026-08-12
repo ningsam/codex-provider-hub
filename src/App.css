@@ -423,6 +423,11 @@ input {
   border-color: var(--line-strong);
 }
 
+.btn:focus-visible {
+  outline: 2px solid var(--accent-2);
+  outline-offset: 2px;
+}
+
 .btn:disabled {
   opacity: 0.55;
   cursor: not-allowed;
@@ -846,9 +851,14 @@ input {
   align-items: flex-start;
 }
 
+.account-mini-copy {
+  min-width: 0;
+}
+
 .account-mini-name {
   font-weight: 650;
   letter-spacing: -0.02em;
+  overflow-wrap: anywhere;
 }
 
 .account-mini-email {
@@ -865,6 +875,42 @@ input {
   line-height: 1.4;
 }
 
+.account-mini-badges {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.account-mini-availability {
+  display: flex;
+  gap: 7px;
+  margin: 8px 0 0;
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
+.account-mini-availability span {
+  flex-shrink: 0;
+  color: var(--muted-2);
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.account-mini-availability.status-ok {
+  color: var(--ok);
+}
+
+.account-mini-availability.status-warn {
+  color: var(--warn);
+}
+
+.account-mini-availability.status-danger {
+  color: var(--danger);
+}
+
 .account-mini-meters {
   display: flex;
   flex-direction: column;
@@ -876,9 +922,43 @@ input {
   margin: 2px 0 6px;
 }
 
+.official-quota {
+  margin-top: 10px;
+  border: 1px solid rgba(94, 200, 192, 0.25);
+  border-radius: var(--radius-sm);
+  padding: 9px 10px;
+  background: rgba(94, 200, 192, 0.045);
+}
+
+.official-quota.is-exhausted {
+  border-color: rgba(224, 120, 120, 0.5);
+  background: rgba(224, 120, 120, 0.08);
+}
+
+.official-quota-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  color: var(--ok);
+  font-size: 0.72rem;
+}
+
+.official-quota.is-exhausted .official-quota-head {
+  color: var(--danger);
+}
+
+.official-quota-head strong {
+  color: inherit;
+  font-size: 0.74rem;
+  font-weight: 650;
+}
+
 .account-mini-actions {
   display: flex;
   justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
   margin-top: 10px;
 }
 
@@ -905,6 +985,295 @@ input {
 .pill.status-warn {
   color: #1a1406;
   background: rgba(212, 176, 106, 0.9);
+}
+
+.pill.status-current {
+  color: #06101a;
+  background: rgba(106, 168, 232, 0.92);
+}
+
+.pool-routing {
+  padding: 10px 0 10px 10px;
+  border-top: 1px dashed var(--line);
+  border-bottom: 1px dashed var(--line);
+  border-left: 2px solid var(--ok);
+}
+
+.pool-routing.routing-warn {
+  border-left-color: var(--warn);
+}
+
+.pool-routing.routing-danger {
+  border-left-color: var(--danger);
+}
+
+.pool-routing-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.pool-routing-copy {
+  min-width: 0;
+}
+
+.pool-routing-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-weight: 650;
+}
+
+.pool-routing-copy p {
+  margin: 5px 0 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.route-window {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+  flex-shrink: 0;
+  color: var(--muted-2);
+  font-size: 0.68rem;
+}
+
+.route-window strong {
+  color: var(--text);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.route-observation {
+  display: grid;
+  grid-template-columns: minmax(8.5rem, 0.7fr) minmax(0, 1.3fr);
+  gap: 14px;
+  margin-top: 10px;
+}
+
+.route-last-success {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.route-last-success > span,
+.routing-policy-control > span {
+  color: var(--muted-2);
+  font-size: 0.68rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.route-last-success strong {
+  overflow: hidden;
+  color: var(--text);
+  font-size: 0.84rem;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.route-last-success small {
+  color: var(--accent-2);
+  font-size: 0.68rem;
+}
+
+.route-distribution {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.route-distribution-row {
+  display: grid;
+  grid-template-columns: minmax(5rem, 1fr) minmax(3rem, 0.7fr) 2.4rem;
+  gap: 8px;
+  align-items: center;
+}
+
+.route-distribution-meta {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.route-distribution-meta > span {
+  overflow: hidden;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.route-distribution-meta small {
+  color: var(--muted-2);
+  font-size: 0.65rem;
+}
+
+.route-distribution-track {
+  height: 5px;
+  overflow: hidden;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.route-distribution-track > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent-2);
+  transition: width 0.3s var(--ease);
+}
+
+.route-distribution-percent {
+  color: var(--muted);
+  font-size: 0.68rem;
+  text-align: right;
+}
+
+.route-relay-hint {
+  margin: 10px 0 0;
+  color: var(--accent-2);
+  font-size: 0.76rem;
+  line-height: 1.4;
+}
+
+.route-policy-deviation {
+  margin: 10px 0 0;
+  padding: 8px 10px;
+  border: 1px solid color-mix(in srgb, var(--danger) 42%, transparent);
+  border-radius: 4px;
+  color: #ffd7d0;
+  background: color-mix(in srgb, var(--danger) 13%, transparent);
+  font-size: 0.76rem;
+  font-weight: 650;
+  line-height: 1.45;
+}
+
+.pool-routing-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 14px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+
+.routing-policy-control {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.segmented-control {
+  display: grid;
+  width: min(20rem, 100%);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  padding: 2px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--bg-0);
+}
+
+.segmented-control button {
+  min-width: 0;
+  min-height: 1.9rem;
+  border: 0;
+  border-radius: 2px;
+  padding: 0.3rem 0.48rem;
+  overflow: hidden;
+  cursor: pointer;
+  color: var(--muted);
+  background: transparent;
+  font-size: 0.72rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.segmented-control button:hover:not(:disabled) {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.segmented-control button:focus-visible {
+  position: relative;
+  z-index: 1;
+  outline: 2px solid var(--accent-2);
+  outline-offset: 1px;
+}
+
+.segmented-control button.is-active {
+  color: #06101a;
+  background: var(--accent-2);
+  font-weight: 650;
+}
+
+.segmented-control button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.segmented-control button.is-active:disabled {
+  opacity: 1;
+}
+
+.auto-pause-form {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.auto-pause-form label {
+  color: var(--muted);
+  font-size: 0.68rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.auto-pause-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+}
+
+.auto-pause-controls input {
+  width: 4.5rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 0.4rem 0.5rem;
+  background: var(--bg-0);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  outline: none;
+}
+
+.auto-pause-controls input:focus-visible {
+  border-color: rgba(106, 168, 232, 0.7);
+  box-shadow: 0 0 0 3px var(--accent-2-soft);
+}
+
+.auto-pause-controls input[aria-invalid="true"] {
+  border-color: rgba(224, 120, 120, 0.75);
+}
+
+.auto-pause-controls input:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 /* ——— Narrow tray / mobile ——— */
@@ -954,5 +1323,37 @@ input {
 
   .kv-grid {
     grid-template-columns: 1fr 1fr;
+  }
+
+  .account-mini-head {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .pool-routing-head,
+  .pool-routing-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .route-window {
+    align-items: flex-start;
+  }
+
+  .route-observation {
+    grid-template-columns: 1fr;
+  }
+
+  .account-mini-badges,
+  .account-mini-actions {
+    justify-content: flex-start;
+  }
+
+  .segmented-control {
+    width: 100%;
+  }
+
+  .account-mini-actions .btn {
+    flex: 1 1 8rem;
   }
 }

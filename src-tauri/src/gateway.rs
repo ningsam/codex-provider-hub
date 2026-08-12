@@ -112,7 +112,8 @@ fn docker_compose_running() -> bool {
     match run_sub2api(&["status"]) {
         Ok(out) => {
             // STATUS column contains "Up" when containers are running.
-            out.lines().any(|l| l.contains("Up ") || l.contains("(healthy)"))
+            out.lines()
+                .any(|l| l.contains("Up ") || l.contains("(healthy)"))
                 || out.contains(r#""status":"ok""#)
         }
         Err(_) => false,
@@ -129,9 +130,7 @@ fn count_models_via_api() -> Result<u32, String> {
     if !resp.status().is_success() {
         return Err(format!("GET /v1/models HTTP {}", resp.status()));
     }
-    let body: serde_json::Value = resp
-        .json()
-        .map_err(|e| format!("parse /v1/models: {e}"))?;
+    let body: serde_json::Value = resp.json().map_err(|e| format!("parse /v1/models: {e}"))?;
     let data = body
         .get("data")
         .and_then(|d| d.as_array())
@@ -188,10 +187,7 @@ fn patch_sub2api_base_url(raw: &str, base_url: &str) -> Result<String, String> {
         .ok_or_else(|| "config.toml missing [model_providers.sub2api]".to_string())?;
     let after = start + marker.len();
     let rest = &raw[after..];
-    let end_rel = rest
-        .find("\n[")
-        .map(|i| after + i)
-        .unwrap_or(raw.len());
+    let end_rel = rest.find("\n[").map(|i| after + i).unwrap_or(raw.len());
     let section = &raw[start..end_rel];
     if !section.contains("base_url") {
         return Err("[model_providers.sub2api] has no base_url to update".into());
@@ -238,10 +234,9 @@ fn route_from_slug(slug: &str, enabled: bool) -> ModelRoute {
 
 fn load_provider_config_from_disk() -> Result<ProviderConfig, String> {
     let cfg_path = codex_config_path();
-    let raw = fs::read_to_string(&cfg_path)
-        .map_err(|e| format!("read {}: {e}", cfg_path.display()))?;
-    let doc: toml::Value =
-        toml::from_str(&raw).map_err(|e| format!("parse config.toml: {e}"))?;
+    let raw =
+        fs::read_to_string(&cfg_path).map_err(|e| format!("read {}: {e}", cfg_path.display()))?;
+    let doc: toml::Value = toml::from_str(&raw).map_err(|e| format!("parse config.toml: {e}"))?;
 
     let listen_addr = doc
         .get("model_providers")
@@ -357,10 +352,9 @@ pub fn get_provider_config() -> Result<ProviderConfig, String> {
 #[tauri::command]
 pub fn save_provider_config(cfg: ProviderConfig) -> Result<ProviderConfig, String> {
     let cfg_path = codex_config_path();
-    let raw = fs::read_to_string(&cfg_path)
-        .map_err(|e| format!("read {}: {e}", cfg_path.display()))?;
-    let doc: toml::Value =
-        toml::from_str(&raw).map_err(|e| format!("parse config.toml: {e}"))?;
+    let raw =
+        fs::read_to_string(&cfg_path).map_err(|e| format!("read {}: {e}", cfg_path.display()))?;
+    let doc: toml::Value = toml::from_str(&raw).map_err(|e| format!("parse config.toml: {e}"))?;
 
     // Refuse to proceed if provider table is missing — never invent a new id.
     let has_sub2 = doc
@@ -413,8 +407,7 @@ pub fn save_provider_config(cfg: ProviderConfig) -> Result<ProviderConfig, Strin
     }
     let catalog_out =
         serde_json::to_string_pretty(&catalog).map_err(|e| format!("serialize catalog: {e}"))?;
-    fs::write(&catalog_path, catalog_out + "\n")
-        .map_err(|e| format!("write catalog: {e}"))?;
+    fs::write(&catalog_path, catalog_out + "\n").map_err(|e| format!("write catalog: {e}"))?;
 
     crate::http_util::invalidate_cache("gateway_status");
     let mut saved = load_provider_config_from_disk()?;
@@ -427,6 +420,7 @@ mod tests {
     use super::*;
 
     #[test]
+    #[ignore = "requires the live local gateway deployment"]
     fn live_health_and_models() {
         let healthy = probe_health();
         println!("healthy={healthy}");

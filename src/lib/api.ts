@@ -5,6 +5,7 @@ import type {
   CursorUsage,
   GatewayStatus,
   PickerGuardStatus,
+  OfficialQuotaProbe,
   ProviderConfig,
   ProviderInfo,
   ProviderMutationResult,
@@ -22,6 +23,16 @@ export const api = {
     invoke<ProviderConfig>("save_provider_config", { cfg }),
 
   getSub2apiUsage: () => invoke<Sub2ApiUsage>("get_sub2api_usage"),
+  probeSub2apiOfficialQuota: (accountId: number) =>
+    invoke<OfficialQuotaProbe>("probe_sub2api_official_quota", { accountId }),
+  setSub2apiCurrentAccount: (accountId: number) =>
+    invoke<Sub2ApiUsage>("set_sub2api_current_account", { accountId }),
+  recoverSub2apiAccount: (accountId: number) =>
+    invoke<Sub2ApiUsage>("recover_sub2api_account", { accountId }),
+  setSub2apiAutoPauseThreshold: (threshold: number) =>
+    invoke<Sub2ApiUsage>("set_sub2api_auto_pause_threshold", { percent: threshold }),
+  setSub2apiRoutingPolicy: (policy: Sub2ApiUsage["routing"]["policy"]) =>
+    invoke<Sub2ApiUsage>("set_sub2api_routing_policy", { policy }),
   deleteSub2apiAccount: (accountId: number) =>
     invoke<void>("delete_sub2api_account", { accountId }),
   importSub2apiFile: (filePath: string, name?: string) =>

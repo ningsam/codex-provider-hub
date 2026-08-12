@@ -49,85 +49,53 @@ fn probe_http() -> Client {
         .expect("build probe client")
 }
 
-fn read_admin_creds() -> Result<(String, String), String> {
-    let env_path = sub2api_dir().join(".env");
-    let text = fs::read_to_string(&env_path)
-        .map_err(|e| format!("read {}: {e}", env_path.display()))?;
-    let mut email = String::new();
-    let mut password = String::new();
-    for line in text.lines() {
-        let line = line.trim();
-        if line.is_empty() || line.starts_with('#') {
-            continue;
-        }
-        if let Some(v) = line.strip_prefix("ADMIN_EMAIL=") {
-            email = v.trim().trim_matches('"').trim_matches('\'').to_string();
-        } else if let Some(v) = line.strip_prefix("ADMIN_PASSWORD=") {
-            password = v.trim().trim_matches('"').trim_matches('\'').to_string();
-        }
-    }
-    if email.is_empty() || password.is_empty() {
-        return Err("ADMIN_EMAIL / ADMIN_PASSWORD missing in Sub2API .env".into());
-    }
-    Ok((email, password))
-}
-
-fn admin_login() -> Result<String, String> {
-    let (email, password) = read_admin_creds()?;
-    let resp = HTTP
-        .post(format!("{GATEWAY_BASE}/api/v1/auth/login"))
-        .json(&json!({ "email": email, "password": password }))
-        .send()
-        .map_err(|e| friendly_http_err("admin login", e))?;
-    if !resp.status().is_success() {
-        return Err(format!("admin login HTTP {}", resp.status()));
-    }
-    let body: Value = resp
-        .json()
-        .map_err(|e| format!("parse admin login: {e}"))?;
-    body.pointer("/data/access_token")
-        .and_then(|v| v.as_str())
-        .map(|s| s.to_string())
-        .ok_or_else(|| "admin login missing access_token".into())
-}
-
 fn admin_json(method: reqwest::Method, path: &str, body: Option<Value>) -> Result<Value, String> {
-    let token = admin_login()?;
     let url = if path.starts_with("http") {
         path.to_string()
     } else {
         format!("{GATEWAY_BASE}{path}")
     };
-    let mut req = HTTP
-        .request(method, &url)
-        .bearer_auth(&token)
-        .header("User-Agent", BROWSER_UA);
-    if let Some(b) = body {
-        req = req.json(&b);
+    for attempt in 0..=1 {
+        let token = crate::sub2api::admin_login()?;
+        let mut req = HTTP
+            .request(method.clone(), &url)
+            .bearer_auth(&token)
+            .header("User-Agent", BROWSER_UA);
+        if let Some(body) = body.as_ref() {
+            req = req.json(body);
+        }
+        let resp = req
+            .send()
+            .map_err(|e| friendly_http_err(&format!("admin {path}"), e))?;
+        let status = resp.status();
+        let text = resp
+            .text()
+            .map_err(|e| format!("read admin {path} body: {e}"))?;
+        if status.as_u16() == 401 {
+            crate::sub2api::invalidate_admin_token(&token);
+            if attempt == 0 {
+                continue;
+            }
+        }
+        let parsed: Value = serde_json::from_str(&text).unwrap_or_else(|_| json!({ "raw": text }));
+        if !status.is_success() {
+            let raw_message = parsed
+                .get("message")
+                .and_then(Value::as_str)
+                .or_else(|| parsed.pointer("/error/message").and_then(Value::as_str))
+                .unwrap_or(text.trim());
+            let message = crate::sub2api::safe_reason(raw_message, "request failed");
+            return Err(format!("admin {path} HTTP {status}: {message}"));
+        }
+        if parsed.get("code").and_then(Value::as_i64) == Some(0) {
+            return Ok(parsed.get("data").cloned().unwrap_or(Value::Null));
+        }
+        if parsed.get("data").is_some() {
+            return Ok(parsed["data"].clone());
+        }
+        return Ok(parsed);
     }
-    let resp = req
-        .send()
-        .map_err(|e| friendly_http_err(&format!("admin {path}"), e))?;
-    let status = resp.status();
-    let text = resp
-        .text()
-        .map_err(|e| format!("read admin {path} body: {e}"))?;
-    let parsed: Value = serde_json::from_str(&text).unwrap_or_else(|_| json!({ "raw": text }));
-    if !status.is_success() {
-        let msg = parsed
-            .get("message")
-            .and_then(|m| m.as_str())
-            .or_else(|| parsed.pointer("/error/message").and_then(|m| m.as_str()))
-            .unwrap_or(text.trim());
-        return Err(format!("admin {path} HTTP {status}: {msg}"));
-    }
-    if parsed.get("code").and_then(|c| c.as_i64()) == Some(0) {
-        Ok(parsed.get("data").cloned().unwrap_or(Value::Null))
-    } else if parsed.get("data").is_some() {
-        Ok(parsed["data"].clone())
-    } else {
-        Ok(parsed)
-    }
+    unreachable!("provider admin retry loop always returns")
 }
 
 fn split_url(url: &str) -> Result<(String, String, String), String> {
@@ -242,6 +210,17 @@ fn host_from_base_url(base_url: &str) -> Option<String> {
     split_url(base_url).ok().map(|(_, host, _)| host)
 }
 
+fn append_hint(hint: &mut Option<String>, message: String) {
+    match hint {
+        Some(existing) if !existing.is_empty() => {
+            existing.push(' ');
+            existing.push_str(&message);
+        }
+        Some(existing) => *existing = message,
+        None => *hint = Some(message),
+    }
+}
+
 fn build_model_mapping(prefix: &str, model_ids: &[String]) -> Map<String, Value> {
     let mut map = Map::new();
     for raw in model_ids {
@@ -301,9 +280,7 @@ pub(crate) fn probe_upstream_models(base_url: &str, api_key: &str) -> Result<Vec
         .send()
         .map_err(|e| friendly_http_err("上游 /models", e))?;
     let status = resp.status();
-    let text = resp
-        .text()
-        .map_err(|e| format!("读取上游 /models: {e}"))?;
+    let text = resp.text().map_err(|e| format!("读取上游 /models: {e}"))?;
     if !status.is_success() {
         let snippet: String = text.chars().take(180).collect();
         return Err(format!(
@@ -421,26 +398,27 @@ fn get_account(id: i64) -> Result<Value, String> {
 
 fn catalog_path() -> Result<std::path::PathBuf, String> {
     let cfg_path = codex_config_path();
-    let raw = fs::read_to_string(&cfg_path)
-        .map_err(|e| format!("read {}: {e}", cfg_path.display()))?;
-    let doc: toml::Value =
-        toml::from_str(&raw).map_err(|e| format!("parse config.toml: {e}"))?;
+    let raw =
+        fs::read_to_string(&cfg_path).map_err(|e| format!("read {}: {e}", cfg_path.display()))?;
+    let doc: toml::Value = toml::from_str(&raw).map_err(|e| format!("parse config.toml: {e}"))?;
     // Refuse to proceed if provider table missing — never invent a new id.
     if doc
         .get("model_providers")
         .and_then(|v| v.get("sub2api"))
         .is_none()
     {
-        return Err("config.toml missing [model_providers.sub2api] — refusing to touch catalog".into());
+        return Err(
+            "config.toml missing [model_providers.sub2api] — refusing to touch catalog".into(),
+        );
     }
     Ok(catalog_path_from_config(&doc))
 }
 
 fn load_catalog() -> Result<(std::path::PathBuf, Value), String> {
     let path = catalog_path()?;
-    let raw = fs::read_to_string(&path).map_err(|e| format!("read catalog {}: {e}", path.display()))?;
-    let catalog: Value =
-        serde_json::from_str(&raw).map_err(|e| format!("parse catalog: {e}"))?;
+    let raw =
+        fs::read_to_string(&path).map_err(|e| format!("read catalog {}: {e}", path.display()))?;
+    let catalog: Value = serde_json::from_str(&raw).map_err(|e| format!("parse catalog: {e}"))?;
     Ok((path, catalog))
 }
 
@@ -488,7 +466,12 @@ fn template_model_entry(catalog: &Value) -> Value {
     template
 }
 
-fn make_catalog_entry(template: &Value, display_name: &str, prefix: &str, raw_model: &str) -> Value {
+fn make_catalog_entry(
+    template: &Value,
+    display_name: &str,
+    prefix: &str,
+    raw_model: &str,
+) -> Value {
     let mut entry = template.clone();
     let slug = format!("{prefix}-{raw_model}");
     if let Some(obj) = entry.as_object_mut() {
@@ -536,7 +519,8 @@ fn upsert_catalog_models(
         added += 1;
     }
 
-    let out = serde_json::to_string_pretty(&catalog).map_err(|e| format!("serialize catalog: {e}"))?;
+    let out =
+        serde_json::to_string_pretty(&catalog).map_err(|e| format!("serialize catalog: {e}"))?;
     fs::write(&path, out + "\n").map_err(|e| format!("write catalog: {e}"))?;
     crate::http_util::invalidate_cache("gateway_status");
     Ok(added)
@@ -558,7 +542,8 @@ fn remove_catalog_prefix(prefix: &str) -> Result<u32, String> {
             .unwrap_or(true)
     });
     let removed = (before - models.len()) as u32;
-    let out = serde_json::to_string_pretty(&catalog).map_err(|e| format!("serialize catalog: {e}"))?;
+    let out =
+        serde_json::to_string_pretty(&catalog).map_err(|e| format!("serialize catalog: {e}"))?;
     fs::write(&path, out + "\n").map_err(|e| format!("write catalog: {e}"))?;
     crate::http_util::invalidate_cache("gateway_status");
     Ok(removed)
@@ -580,13 +565,12 @@ fn try_add_upstream_host_allowlist(host: &str) -> Result<(bool, bool, Option<Str
             )),
         ));
     }
-    let raw = fs::read_to_string(&compose)
-        .map_err(|e| format!("read {}: {e}", compose.display()))?;
+    let raw =
+        fs::read_to_string(&compose).map_err(|e| format!("read {}: {e}", compose.display()))?;
     // Local Hub default: allowlist disabled so any https upstream works without restart.
     if raw.lines().any(|l| {
         let t = l.trim();
-        t.starts_with("SECURITY_URL_ALLOWLIST_ENABLED:")
-            && t.contains("false")
+        t.starts_with("SECURITY_URL_ALLOWLIST_ENABLED:") && t.contains("false")
     }) {
         return Ok((
             false,
@@ -703,7 +687,11 @@ fn create_apikey_account(
     )
 }
 
-fn update_account_mapping(account_id: i64, base_url: &str, mapping: &Map<String, Value>) -> Result<Value, String> {
+fn update_account_mapping(
+    account_id: i64,
+    base_url: &str,
+    mapping: &Map<String, Value>,
+) -> Result<Value, String> {
     // api_key omitted on purpose — Sub2API merges preserving sensitive creds.
     let payload = json!({
         "credentials": {
@@ -775,9 +763,7 @@ pub fn add_provider(
         .ok_or_else(|| "创建账号响应缺少 id".to_string())?;
     // Re-fetch: create response credentials are redacted the same way as GET.
     let fetched = get_account(created_id).unwrap_or(created);
-    let provider = account_to_info(&fetched).ok_or_else(|| {
-        "创建成功但无法解析账号".to_string()
-    })?;
+    let provider = account_to_info(&fetched).ok_or_else(|| "创建成功但无法解析账号".to_string())?;
 
     let mut models_synced = 0u32;
     if !model_ids.is_empty() {
@@ -792,6 +778,16 @@ pub fn add_provider(
             "若请求返回 502 host not allowed，需在 Sub2API 放行域名 {host}"
         ));
     }
+    if let Err(error) = crate::sub2api::refresh_managed_route_after_pool_change() {
+        append_hint(
+            &mut hint,
+            format!(
+                "路由组同步失败：{}",
+                crate::sub2api::safe_reason(&error, "未知错误")
+            ),
+        );
+    }
+    crate::http_util::invalidate_cache("sub2api_usage");
 
     // Drop api_key from scope intentionally (no further use / no logging).
     drop(api_key);
@@ -848,7 +844,8 @@ pub fn sync_provider_models(
         return Err("账号缺少 credentials.base_url".into());
     }
 
-    let model_ids = if let Some(key) = api_key.as_ref().map(|s| s.trim()).filter(|s| !s.is_empty()) {
+    let model_ids = if let Some(key) = api_key.as_ref().map(|s| s.trim()).filter(|s| !s.is_empty())
+    {
         probe_upstream_models(&info.base_url, key)?
     } else {
         match sync_upstream_via_admin(account_id) {
@@ -917,6 +914,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "requires the live local Sub2API deployment"]
     fn live_list_providers() {
         let list = list_providers().expect("list");
         println!("providers={}", list.len());

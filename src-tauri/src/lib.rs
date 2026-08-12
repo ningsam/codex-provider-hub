@@ -1,12 +1,15 @@
 //! Codex Provider Hub — Tauri application entry.
 
 mod aihub;
+mod channel_switch;
+mod codex_sessions;
 mod crypto;
 mod cursor;
 mod gateway;
 mod http_util;
 mod picker_guard;
 mod providers;
+mod route_doctor;
 mod sub2api;
 
 use parking_lot::Mutex;
@@ -32,7 +35,10 @@ fn remember_tray_anchor(window_scale: f64, rect: &Rect, cursor: PhysicalPosition
     *LAST_TRAY_RECT.lock() = Some((x, y, w, h));
 }
 
-fn tray_anchor_physical(app: &tauri::AppHandle, tray: Option<&TrayIcon>) -> Option<(f64, f64, f64, f64)> {
+fn tray_anchor_physical(
+    app: &tauri::AppHandle,
+    tray: Option<&TrayIcon>,
+) -> Option<(f64, f64, f64, f64)> {
     if let Some(cached) = *LAST_TRAY_RECT.lock() {
         return Some(cached);
     }
@@ -202,7 +208,9 @@ fn tray_label_from_metrics() -> (String, String) {
                     .as_ref()
                     .or(u.seven_day.as_ref())
                     .map(|w| w.remaining_percent);
-                title = pct.map(|p| format!("{p:.0}%")).unwrap_or_else(|| "—".into());
+                title = pct
+                    .map(|p| format!("{p:.0}%"))
+                    .unwrap_or_else(|| "—".into());
                 let fmt_window = |label: &str, w: &Option<sub2api::QuotaWindow>| {
                     w.as_ref()
                         .map(|w| format!("{label} {:.0}%", w.remaining_percent))
@@ -221,7 +229,11 @@ fn tray_label_from_metrics() -> (String, String) {
             }
             for a in u.accounts.iter().filter(|a| a.status == "error").take(2) {
                 let msg = a.error_message.chars().take(48).collect::<String>();
-                tip_parts.push(format!("{}: {}", a.name, if msg.is_empty() { "error" } else { &msg }));
+                tip_parts.push(format!(
+                    "{}: {}",
+                    a.name,
+                    if msg.is_empty() { "error" } else { &msg }
+                ));
             }
         }
         Err(_) => {
@@ -245,14 +257,16 @@ fn tray_label_from_metrics() -> (String, String) {
     (title, tip_parts.join(" · "))
 }
 
+fn update_tray_label(tray: &TrayIcon) {
+    let (title, tip) = tray_label_from_metrics();
+    let _ = tray.set_title(Some(&title));
+    let _ = tray.set_tooltip(Some(&tip));
+}
+
 fn spawn_tray_updater(tray: TrayIcon) {
-    std::thread::spawn(move || {
-        loop {
-            let (title, tip) = tray_label_from_metrics();
-            let _ = tray.set_title(Some(&title));
-            let _ = tray.set_tooltip(Some(&tip));
-            std::thread::sleep(Duration::from_secs(30));
-        }
+    std::thread::spawn(move || loop {
+        update_tray_label(&tray);
+        std::thread::sleep(Duration::from_secs(30));
     });
 }
 
@@ -267,7 +281,17 @@ pub fn run() {
             gateway::stop_gateway,
             gateway::get_provider_config,
             gateway::save_provider_config,
+            channel_switch::get_channel_switch_status,
+            channel_switch::switch_codex_channel,
+            channel_switch::restart_codex_app,
+            codex_sessions::list_codex_sessions,
+            codex_sessions::merge_codex_sessions_into_current_provider,
             sub2api::get_sub2api_usage,
+            sub2api::probe_sub2api_official_quota,
+            sub2api::set_sub2api_current_account,
+            sub2api::recover_sub2api_account,
+            sub2api::set_sub2api_auto_pause_threshold,
+            sub2api::set_sub2api_routing_policy,
             sub2api::delete_sub2api_account,
             sub2api::import_sub2api_file,
             sub2api::begin_sub2api_browser_login,
@@ -287,6 +311,9 @@ pub fn run() {
             providers::remove_provider,
             providers::sync_provider_models,
             providers::probe_provider_models,
+            route_doctor::diagnose_sub2api_route,
+            route_doctor::probe_sub2api_route_relays,
+            route_doctor::repair_sub2api_route,
             picker_guard::get_picker_guard_status,
             picker_guard::apply_picker_guard,
             picker_guard::relaunch_chatgpt_guarded,
@@ -323,9 +350,7 @@ pub fn run() {
                     }
                     "refresh" => {
                         if let Some(tray) = app.tray_by_id("main") {
-                            let (title, tip) = tray_label_from_metrics();
-                            let _ = tray.set_title(Some(&title));
-                            let _ = tray.set_tooltip(Some(&tip));
+                            std::thread::spawn(move || update_tray_label(&tray));
                         }
                     }
                     "quit" => app.exit(0),
@@ -346,8 +371,7 @@ pub fn run() {
                             ..
                         } => {
                             remember_tray_anchor(scale, rect, *position);
-                            if *button == MouseButton::Left
-                                && *button_state == MouseButtonState::Up
+                            if *button == MouseButton::Left && *button_state == MouseButtonState::Up
                             {
                                 toggle_main_window(app, Some(tray));
                             }
@@ -361,10 +385,7 @@ pub fn run() {
                 })
                 .build(app)?;
 
-            // Immediate label, then background refresh loop.
-            let (title, tip) = tray_label_from_metrics();
-            let _ = tray.set_title(Some(&title));
-            let _ = tray.set_tooltip(Some(&tip));
+            // Fetch the initial label off the setup thread so tray events stay responsive.
             spawn_tray_updater(tray);
 
             // Keep ChatGPT Codex model picker from filtering custom slugs.
