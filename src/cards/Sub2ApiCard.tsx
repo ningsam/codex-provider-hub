@@ -202,6 +202,8 @@ function AccountMiniCard({
           : "danger";
   const five = account.fiveHour?.remainingPercent;
   const seven = account.sevenDay?.remainingPercent;
+  const fiveUsed = five != null ? 100 - five : null;
+  const sevenUsed = seven != null ? 100 - seven : null;
   const pending = pendingAction?.accountId === account.id ? pendingAction.kind : null;
   const availabilityReason =
     account.availabilityReason.trim() || statusLabel(account.availability || account.status);
@@ -252,7 +254,7 @@ function AccountMiniCard({
             label={
               five == null
                 ? "本地 5h · 无数据"
-                : `本地 5h 剩余 ${five.toFixed(0)}% · reset ${formatDuration(account.fiveHour?.resetAfterSeconds ?? 0)}`
+                : `本地 5h 已用 ${fiveUsed?.toFixed(0)}% · reset ${formatDuration(account.fiveHour?.resetAfterSeconds ?? 0)}`
             }
           />
           <ProgressBar
@@ -261,7 +263,7 @@ function AccountMiniCard({
             label={
               seven == null
                 ? "本地 7d · 无数据"
-                : `本地 7d 剩余 ${seven.toFixed(0)}% · reset ${formatDuration(account.sevenDay?.resetAfterSeconds ?? 0)}`
+                : `本地 7d 已用 ${sevenUsed?.toFixed(0)}% · reset ${formatDuration(account.sevenDay?.resetAfterSeconds ?? 0)}`
             }
           />
         </div>
