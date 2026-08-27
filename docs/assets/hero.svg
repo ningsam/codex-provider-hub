@@ -1,0 +1,129 @@
+<svg width="1280" height="640" viewBox="0 0 1280 640" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">Codex Provider Hub</title>
+  <desc id="desc">A local-first macOS control center for Codex gateways, OAuth account pools, providers and quotas.</desc>
+  <defs>
+    <linearGradient id="bg" x1="58" y1="0" x2="1190" y2="640" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#EAF6FF"/>
+      <stop offset="0.48" stop-color="#E8F0FF"/>
+      <stop offset="1" stop-color="#EEE9FF"/>
+    </linearGradient>
+    <linearGradient id="brand" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#36C9FF"/>
+      <stop offset="0.52" stop-color="#4C79FF"/>
+      <stop offset="1" stop-color="#7957F6"/>
+    </linearGradient>
+    <linearGradient id="glass" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="white" stop-opacity="0.88"/>
+      <stop offset="1" stop-color="white" stop-opacity="0.45"/>
+    </linearGradient>
+    <radialGradient id="orb" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(1017 268) rotate(90) scale(130)">
+      <stop stop-color="#FFFFFF"/>
+      <stop offset="0.18" stop-color="#8DE3FF"/>
+      <stop offset="0.55" stop-color="#5986FF"/>
+      <stop offset="1" stop-color="#7357ED" stop-opacity="0.15"/>
+    </radialGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="170%">
+      <feDropShadow dx="0" dy="22" stdDeviation="28" flood-color="#2E4C8E" flood-opacity="0.18"/>
+    </filter>
+    <filter id="smallShadow" x="-40%" y="-40%" width="180%" height="180%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#4165B7" flood-opacity="0.16"/>
+    </filter>
+    <clipPath id="windowClip"><rect x="628" y="66" width="582" height="508" rx="30"/></clipPath>
+  </defs>
+
+  <rect width="1280" height="640" rx="34" fill="url(#bg)"/>
+  <circle cx="1130" cy="-20" r="250" fill="#BFD9FF" fill-opacity="0.35"/>
+  <circle cx="510" cy="650" r="280" fill="#C8F1FF" fill-opacity="0.28"/>
+  <circle cx="1220" cy="610" r="220" fill="#CBBEFF" fill-opacity="0.36"/>
+
+  <g transform="translate(68 66)">
+    <rect width="62" height="62" rx="20" fill="url(#brand)" filter="url(#smallShadow)"/>
+    <rect x="8" y="8" width="46" height="46" rx="15" stroke="white" stroke-opacity="0.62"/>
+    <text x="31" y="42" text-anchor="middle" fill="white" font-size="33" font-weight="700" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif">C</text>
+    <text x="82" y="22" fill="#667696" font-size="14" font-weight="700" letter-spacing="2.2" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif">CODEX</text>
+    <text x="82" y="49" fill="#15284A" font-size="24" font-weight="750" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif">PROVIDER HUB</text>
+  </g>
+
+  <g transform="translate(70 204)">
+    <text fill="#13264A" font-size="47" font-weight="760" letter-spacing="-1.6" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif">
+      <tspan x="0" y="0">One local control center</tspan>
+      <tspan x="0" y="62" fill="#426DF4">for every Codex resource.</tspan>
+    </text>
+    <text x="2" y="144" fill="#506483" font-size="25" font-weight="430" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif">
+      <tspan x="2" dy="0">Gateways, OAuth pools, providers, quotas and</tspan>
+      <tspan x="2" dy="38">model catalog sync — private on your Mac.</tspan>
+    </text>
+    <g transform="translate(0 242)" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif" font-size="15" font-weight="650" fill="#284269">
+      <rect width="130" height="42" rx="21" fill="white" fill-opacity="0.58" stroke="#84A6F7"/>
+      <text x="65" y="27" text-anchor="middle">LOCAL-FIRST</text>
+      <rect x="144" width="96" height="42" rx="21" fill="white" fill-opacity="0.58" stroke="#84A6F7"/>
+      <text x="192" y="27" text-anchor="middle">macOS</text>
+      <rect x="254" width="136" height="42" rx="21" fill="white" fill-opacity="0.58" stroke="#84A6F7"/>
+      <text x="322" y="27" text-anchor="middle">TAURI + RUST</text>
+    </g>
+    <text x="2" y="348" fill="#29446F" font-size="17" font-weight="650" font-family="ui-monospace,SFMono-Regular,Menlo,monospace">github.com/ningsam/codex-provider-hub</text>
+  </g>
+
+  <g transform="translate(30 0)">
+    <rect x="628" y="66" width="582" height="508" rx="30" fill="url(#glass)" stroke="white" stroke-width="2"/>
+    <rect x="642" y="82" width="554" height="478" rx="22" fill="#F7FBFF" fill-opacity="0.54" stroke="#D2E3F6"/>
+    <path d="M642 145H1196" stroke="#C7D8EC"/>
+    <path d="M710 145V560" stroke="#D7E4F2"/>
+
+    <rect x="659" y="99" width="32" height="32" rx="10" fill="url(#brand)"/>
+    <text x="675" y="122" text-anchor="middle" fill="white" font-size="18" font-weight="700" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif">C</text>
+    <text x="701" y="109" fill="#687996" font-size="7" font-weight="700" letter-spacing="1.4" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif">CODEX</text>
+    <text x="701" y="126" fill="#172A49" font-size="13" font-weight="750" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif">Provider Hub</text>
+    <rect x="1024" y="99" width="112" height="28" rx="14" fill="white" fill-opacity="0.68"/>
+    <circle cx="1041" cy="113" r="4" fill="#19B995"/>
+    <text x="1051" y="117" fill="#314866" font-size="9" font-weight="650" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif">Local workspace</text>
+
+    <g fill="white" fill-opacity="0.58" stroke="#D8E6F4">
+      <rect x="654" y="161" width="43" height="43" rx="14"/>
+      <rect x="654" y="219" width="43" height="43" rx="14"/>
+      <rect x="654" y="277" width="43" height="43" rx="14"/>
+      <rect x="654" y="502" width="43" height="43" rx="14"/>
+    </g>
+    <rect x="660" y="167" width="31" height="31" rx="11" fill="url(#brand)"/>
+    <path d="M670 177H681M670 182H681M670 187H681" stroke="white" stroke-width="1.6" stroke-linecap="round"/>
+    <circle cx="675.5" cy="240.5" r="4" stroke="#657B9E"/>
+    <path d="M671 298L675.5 293.5L680 298L675.5 302.5L671 298Z" stroke="#657B9E"/>
+    <rect x="660" y="508" width="31" height="31" rx="11" fill="url(#brand)"/>
+    <path d="M675.5 516L677.6 522.4L684 524.5L677.6 526.6L675.5 533L673.4 526.6L667 524.5L673.4 522.4L675.5 516Z" fill="white"/>
+
+    <rect x="731" y="165" width="438" height="151" rx="22" fill="white" fill-opacity="0.55" stroke="white"/>
+    <path d="M754 192H777" stroke="#5C87FA" stroke-width="1.5"/>
+    <text x="786" y="196" fill="#3F6FEF" font-size="10" font-weight="700" letter-spacing="1.7" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif">CONTROL CENTER</text>
+    <text x="754" y="235" fill="#182A49" font-size="27" font-weight="600" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif">See every Codex resource.</text>
+    <text x="754" y="264" fill="#667A98" font-size="12" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif">Gateways, OAuth pools, providers and quotas — in one place.</text>
+    <circle cx="1089" cy="237" r="65" fill="url(#orb)" opacity="0.95"/>
+    <circle cx="1089" cy="237" r="40" stroke="white" stroke-opacity="0.6"/>
+    <rect x="1074" y="222" width="30" height="30" rx="9" fill="white" fill-opacity="0.24" stroke="white"/>
+    <path d="M1089 229L1091.5 235.5L1098 238L1091.5 240.5L1089 247L1086.5 240.5L1080 238L1086.5 235.5L1089 229Z" fill="white"/>
+
+    <rect x="731" y="331" width="210" height="195" rx="22" fill="white" fill-opacity="0.63" stroke="white"/>
+    <rect x="956" y="331" width="213" height="195" rx="22" fill="white" fill-opacity="0.63" stroke="white"/>
+    <text x="752" y="360" fill="#53709A" font-size="9" font-weight="700" font-family="ui-monospace,SFMono-Regular,Menlo,monospace">01</text>
+    <text x="780" y="361" fill="#1A2C4A" font-size="15" font-weight="720" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif">Local gateway</text>
+    <text x="752" y="381" fill="#7585A0" font-size="9" font-family="ui-monospace,SFMono-Regular,Menlo,monospace">127.0.0.1:18080 · Sub2API</text>
+    <rect x="752" y="397" width="50" height="29" rx="14.5" fill="url(#brand)"/>
+    <text x="777" y="416" text-anchor="middle" fill="white" font-size="10" font-weight="700" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif">Start</text>
+    <path d="M752 442H920" stroke="#DEE8F4"/>
+    <text x="752" y="466" fill="#8291A9" font-size="9" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif">STATUS</text>
+    <text x="752" y="493" fill="#17AF8D" font-size="20" font-weight="750" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif">running</text>
+
+    <text x="977" y="360" fill="#53709A" font-size="9" font-weight="700" font-family="ui-monospace,SFMono-Regular,Menlo,monospace">02</text>
+    <text x="1005" y="361" fill="#1A2C4A" font-size="15" font-weight="720" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif">Model picker guard</text>
+    <rect x="1091" y="347" width="56" height="22" rx="11" fill="#E7FFF7" stroke="#BCEBDE"/>
+    <text x="1119" y="362" text-anchor="middle" fill="#159675" font-size="8" font-weight="700" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif">protected</text>
+    <text x="977" y="384" fill="#7585A0" font-size="9" font-family="ui-monospace,SFMono-Regular,Menlo,monospace">Statsig · Local Storage · host-rules</text>
+    <rect x="977" y="397" width="62" height="29" rx="14.5" fill="#FFEEF2" stroke="#FFD0DA"/>
+    <text x="1008" y="416" text-anchor="middle" fill="#E35E79" font-size="9" font-weight="700" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif">Disable</text>
+    <rect x="1047" y="397" width="62" height="29" rx="14.5" fill="url(#brand)"/>
+    <text x="1078" y="416" text-anchor="middle" fill="white" font-size="9" font-weight="700" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif">Repair</text>
+    <path d="M977 442H1148" stroke="#DEE8F4"/>
+    <text x="977" y="466" fill="#8291A9" font-size="9" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif">GUARD</text>
+    <text x="977" y="493" fill="#17AF8D" font-size="20" font-weight="750" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif">on</text>
+  </g>
+  <rect x="658" y="66" width="582" height="508" rx="30" stroke="white" stroke-width="2"/>
+</svg>
