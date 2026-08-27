@@ -29,7 +29,9 @@
         "acceptFirstMouse": true,
         "skipTaskbar": true,
         "windowEffects": {
-          "effects": ["popover"],
+          "effects": [
+            "popover"
+          ],
           "radius": 26
         }
       }
@@ -52,7 +54,8 @@
       "resources/picker_guard_patch.py"
     ],
     "macOS": {
-      "minimumSystemVersion": "11.0"
+      "minimumSystemVersion": "11.0",
+      "signingIdentity": "-"
     }
   }
 }
