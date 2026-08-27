@@ -4,8 +4,9 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc && vite build",
+    "icons": "tauri icon public/codex-hub.svg",
+    "dev": "npm run icons && vite",
+    "build": "npm run icons && tsc && vite build",
     "preview": "vite preview",
     "tauri": "tauri"
   },
