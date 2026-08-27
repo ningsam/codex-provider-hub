@@ -1,3 +1,5 @@
+import { useEffect, useState } from "react";
+import { getCurrentWindow } from "@tauri-apps/api/window";
 import { AihubCard } from "./cards/AihubCard";
 import { CursorPoolCard } from "./cards/CursorPoolCard";
 import { GatewayCard } from "./cards/GatewayCard";
@@ -6,6 +8,7 @@ import { ProvidersCard } from "./cards/ProvidersCard";
 import { Sub2ApiCard } from "./cards/Sub2ApiCard";
 import "./App.css";
 
+type Theme = "dark" | "light";
 type GlyphName =
   | "overview"
   | "usage"
@@ -14,12 +17,16 @@ type GlyphName =
   | "shield"
   | "route"
   | "refresh"
-  | "spark";
+  | "spark"
+  | "sun"
+  | "moon"
+  | "hide"
+  | "command";
 
-function Glyph({ name }: { name: GlyphName }) {
+function Glyph({ name, size = 18 }: { name: GlyphName; size?: number }) {
   const common = {
-    width: 18,
-    height: 18,
+    width: size,
+    height: size,
     viewBox: "0 0 24 24",
     fill: "none",
     stroke: "currentColor",
@@ -42,10 +49,10 @@ function Glyph({ name }: { name: GlyphName }) {
     case "usage":
       return (
         <svg {...common}>
-          <path d="M4 17V10" />
-          <path d="M10 17V5" />
-          <path d="M16 17v-4" />
-          <path d="M22 17V8" />
+          <path d="M4 18V11" />
+          <path d="M10 18V5" />
+          <path d="M16 18v-4" />
+          <path d="M22 18V8" />
           <path d="M2 21h20" />
         </svg>
       );
@@ -98,64 +105,139 @@ function Glyph({ name }: { name: GlyphName }) {
           <path d="m19 14 .8 2.2L22 17l-2.2.8L19 20l-.8-2.2L16 17l2.2-.8L19 14Z" />
         </svg>
       );
+    case "sun":
+      return (
+        <svg {...common}>
+          <circle cx="12" cy="12" r="3.5" />
+          <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />
+        </svg>
+      );
+    case "moon":
+      return (
+        <svg {...common}>
+          <path d="M20.4 14.2A8 8 0 0 1 9.8 3.6 8.2 8.2 0 1 0 20.4 14.2Z" />
+        </svg>
+      );
+    case "hide":
+      return (
+        <svg {...common}>
+          <path d="M5 12h14" />
+        </svg>
+      );
+    case "command":
+      return (
+        <svg {...common}>
+          <path d="M9 6V5a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3v14a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3V6Z" />
+        </svg>
+      );
   }
 }
 
 const navigation = [
-  { href: "#overview", label: "运行状态", icon: "overview" as const },
-  { href: "#usage", label: "额度用量", icon: "usage" as const },
-  { href: "#providers", label: "供应商", icon: "providers" as const },
-  { href: "#accounts", label: "账号池", icon: "accounts" as const },
+  { id: "overview", label: "状态", meta: "Overview", icon: "overview" as const },
+  { id: "usage", label: "额度", meta: "Usage", icon: "usage" as const },
+  { id: "providers", label: "供应商", meta: "Routes", icon: "providers" as const },
+  { id: "accounts", label: "账号池", meta: "Accounts", icon: "accounts" as const },
 ];
 
-const facts = [
-  {
-    icon: "shield" as const,
-    label: "本地优先",
-    value: "敏感凭据留在设备",
-  },
-  {
-    icon: "route" as const,
-    label: "统一路由",
-    value: "网关与供应商一处管理",
-  },
-  {
-    icon: "refresh" as const,
-    label: "自动刷新",
-    value: "状态与额度持续同步",
-  },
+const principles = [
+  { icon: "shield" as const, label: "Local first", value: "凭据留在本机" },
+  { icon: "route" as const, label: "One route", value: "统一模型入口" },
+  { icon: "refresh" as const, label: "Live state", value: "持续刷新状态" },
 ];
+
+function initialTheme(): Theme {
+  const saved = window.localStorage.getItem("codex-hub-theme");
+  if (saved === "light" || saved === "dark") return saved;
+  return window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+}
 
 export default function App() {
+  const [theme, setTheme] = useState<Theme>(initialTheme);
+  const [activeSection, setActiveSection] = useState("overview");
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    window.localStorage.setItem("codex-hub-theme", theme);
+  }, [theme]);
+
+  useEffect(() => {
+    const root = document.querySelector<HTMLElement>(".main-panel");
+    const sections = navigation
+      .map((item) => document.getElementById(item.id))
+      .filter((section): section is HTMLElement => Boolean(section));
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+        if (visible?.target.id) setActiveSection(visible.target.id);
+      },
+      { root, rootMargin: "-12% 0px -68%", threshold: [0.08, 0.25, 0.55] },
+    );
+
+    sections.forEach((section) => observer.observe(section));
+    return () => observer.disconnect();
+  }, []);
+
+  const hideWindow = () => {
+    void getCurrentWindow().hide();
+  };
+
   return (
     <div className="app-shell">
       <div className="ambient-canvas" aria-hidden>
-        <span className="ambient-orb ambient-orb-a" />
-        <span className="ambient-orb ambient-orb-b" />
-        <span className="ambient-orb ambient-orb-c" />
-        <span className="ambient-grid" />
+        <span className="ambient-aurora ambient-aurora-a" />
+        <span className="ambient-aurora ambient-aurora-b" />
+        <span className="ambient-aurora ambient-aurora-c" />
         <span className="ambient-noise" />
       </div>
 
       <div className="glass-frame">
-        <header className="topbar">
+        <span className="frame-specular" aria-hidden />
+        <span className="frame-refraction" aria-hidden />
+
+        <header className="topbar" data-tauri-drag-region>
           <a className="brand-lockup" href="#overview" aria-label="Codex Provider Hub 首页">
             <span className="brand-mark" aria-hidden>
+              <span className="brand-mark-glow" />
               <span className="brand-mark-core">C</span>
             </span>
             <span className="brand-copy">
-              <span className="brand-overline">Codex</span>
-              <strong>Provider Hub</strong>
+              <strong>Codex Provider Hub</strong>
+              <span>Local control plane</span>
             </span>
           </a>
 
-          <div className="topbar-meta" aria-label="应用状态">
-            <span className="privacy-chip">
-              <span className="privacy-dot" aria-hidden />
-              Local workspace
+          <div className="topbar-status" aria-label="工作区状态">
+            <span className="live-chip">
+              <span className="live-dot" aria-hidden />
+              Live workspace
             </span>
-            <span className="topbar-divider" aria-hidden />
-            <span className="topbar-caption">Private control center</span>
+            <span className="topbar-separator" aria-hidden />
+            <span className="topbar-caption">Private · On device</span>
+          </div>
+
+          <div className="window-actions">
+            <button
+              type="button"
+              className="window-action"
+              onClick={() => setTheme((value) => (value === "dark" ? "light" : "dark"))}
+              aria-label={theme === "dark" ? "切换到浅色主题" : "切换到深色主题"}
+              title={theme === "dark" ? "浅色主题" : "深色主题"}
+            >
+              <Glyph name={theme === "dark" ? "sun" : "moon"} size={16} />
+            </button>
+            <button
+              type="button"
+              className="window-action"
+              onClick={hideWindow}
+              aria-label="隐藏控制台"
+              title="隐藏"
+            >
+              <Glyph name="hide" size={16} />
+            </button>
           </div>
         </header>
 
@@ -165,69 +247,77 @@ export default function App() {
             <nav className="sidebar-nav">
               {navigation.map((item, index) => (
                 <a
-                  className={`nav-item ${index === 0 ? "is-active" : ""}`}
-                  href={item.href}
-                  key={item.href}
+                  className={`nav-item ${activeSection === item.id ? "is-active" : ""}`}
+                  href={`#${item.id}`}
+                  key={item.id}
+                  onClick={() => setActiveSection(item.id)}
                 >
                   <span className="nav-icon">
                     <Glyph name={item.icon} />
                   </span>
-                  <span>{item.label}</span>
+                  <span className="nav-copy">
+                    <strong>{item.label}</strong>
+                    <span>{item.meta}</span>
+                  </span>
                   <span className="nav-index">0{index + 1}</span>
                 </a>
               ))}
             </nav>
 
-            <div className="sidebar-note">
-              <span className="sidebar-note-icon">
-                <Glyph name="spark" />
+            <div className="sidebar-status">
+              <span className="sidebar-status-icon">
+                <Glyph name="command" size={16} />
               </span>
               <div>
-                <span>Fluid workspace</span>
-                <strong>清晰掌控每条路由</strong>
+                <strong>Local runtime</strong>
+                <span>127.0.0.1:18080</span>
               </div>
             </div>
           </aside>
 
           <main className="main-panel">
-            <section className="hero" aria-labelledby="page-title">
-              <div className="hero-copy">
-                <p className="hero-kicker">
-                  <span className="hero-kicker-line" aria-hidden />
-                  Control center
+            <section className="command-header" aria-labelledby="page-title">
+              <div className="command-copy">
+                <p className="command-kicker">
+                  <span aria-hidden />
+                  Codex infrastructure
                 </p>
                 <h1 id="page-title">
-                  一处看清你的
-                  <span> Codex 资源。</span>
+                  每一条模型路由，
+                  <span>都清晰可见。</span>
                 </h1>
-                <p className="hero-description">
-                  管理本地网关、OAuth 号池、供应商与额度，在稳定、轻盈的工作区中完成每一次切换。
+                <p>
+                  在一个本地优先的控制台中管理网关、OAuth 号池、供应商和额度，不把敏感凭据交给云端面板。
                 </p>
+                <div className="command-tags" aria-label="核心特性">
+                  <span>LOCAL ONLY</span>
+                  <span>ENCRYPTED</span>
+                  <span>AUTO REFRESH</span>
+                </div>
               </div>
 
-              <div className="hero-visual" aria-hidden>
-                <div className="liquid-orb">
-                  <span className="liquid-orb-ring liquid-orb-ring-a" />
-                  <span className="liquid-orb-ring liquid-orb-ring-b" />
-                  <span className="liquid-orb-core">
-                    <Glyph name="spark" />
-                  </span>
-                </div>
-                <span className="orbit-chip orbit-chip-a">Gateway</span>
-                <span className="orbit-chip orbit-chip-b">Providers</span>
-                <span className="orbit-chip orbit-chip-c">Accounts</span>
+              <div className="liquid-lens" aria-hidden>
+                <span className="liquid-lens-halo" />
+                <span className="liquid-lens-ring liquid-lens-ring-a" />
+                <span className="liquid-lens-ring liquid-lens-ring-b" />
+                <span className="liquid-lens-core">
+                  <Glyph name="spark" size={22} />
+                </span>
+                <span className="lens-node lens-node-a">Gateway</span>
+                <span className="lens-node lens-node-b">OAuth</span>
+                <span className="lens-node lens-node-c">Catalog</span>
               </div>
             </section>
 
-            <section className="fact-strip" aria-label="工作区特性">
-              {facts.map((fact) => (
-                <article className="fact-item" key={fact.label}>
-                  <span className="fact-icon">
-                    <Glyph name={fact.icon} />
+            <section className="principle-strip" aria-label="工作区原则">
+              {principles.map((item) => (
+                <article className="principle-item" key={item.label}>
+                  <span className="principle-icon">
+                    <Glyph name={item.icon} size={17} />
                   </span>
-                  <span className="fact-copy">
-                    <strong>{fact.label}</strong>
-                    <span>{fact.value}</span>
+                  <span>
+                    <strong>{item.label}</strong>
+                    <small>{item.value}</small>
                   </span>
                 </article>
               ))}

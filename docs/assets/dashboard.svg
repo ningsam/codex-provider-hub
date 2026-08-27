@@ -1,114 +1,44 @@
-<svg width="1280" height="800" viewBox="0 0 1280 800" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
-  <title id="title">Codex Provider Hub liquid glass dashboard</title>
-  <desc id="desc">A vector preview of the Codex Provider Hub macOS control center with gateway, model guard, OAuth pool, providers and usage cards.</desc>
+<svg width="1200" height="820" viewBox="0 0 1200 820" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">Codex Provider Hub liquid-glass dashboard</title>
+  <desc id="desc">Dark translucent macOS dashboard with a local gateway, model picker guard, OAuth account pool and relay usage cards.</desc>
   <defs>
-    <linearGradient id="bg" x1="80" y1="0" x2="1190" y2="800" gradientUnits="userSpaceOnUse"><stop stop-color="#EAF8FF"/><stop offset=".55" stop-color="#E8F0FF"/><stop offset="1" stop-color="#EFE9FF"/></linearGradient>
-    <linearGradient id="brand" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#35CBFF"/><stop offset=".5" stop-color="#4A79FF"/><stop offset="1" stop-color="#7659F3"/></linearGradient>
-    <linearGradient id="glass" x1="0" y1="0" x2="0" y2="1"><stop stop-color="white" stop-opacity=".9"/><stop offset="1" stop-color="white" stop-opacity=".47"/></linearGradient>
-    <radialGradient id="orb" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(1009 231) rotate(90) scale(118)"><stop stop-color="white"/><stop offset=".2" stop-color="#8FE7FF"/><stop offset=".58" stop-color="#5985FF"/><stop offset="1" stop-color="#7557EF" stop-opacity=".12"/></radialGradient>
-    <filter id="shadow" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dx="0" dy="24" stdDeviation="28" flood-color="#355490" flood-opacity=".18"/></filter>
-    <filter id="soft" x="-30%" y="-30%" width="160%" height="170%"><feDropShadow dx="0" dy="9" stdDeviation="13" flood-color="#4F70B5" flood-opacity=".13"/></filter>
+    <linearGradient id="bg" x1="20" y1="0" x2="1180" y2="820" gradientUnits="userSpaceOnUse"><stop stop-color="#224E69"/><stop offset=".35" stop-color="#0C1822"/><stop offset=".7" stop-color="#1B1630"/><stop offset="1" stop-color="#0A2924"/></linearGradient>
+    <radialGradient id="a" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(150 60) rotate(45) scale(460)"><stop stop-color="#58B2EE" stop-opacity=".35"/><stop offset="1" stop-color="#58B2EE" stop-opacity="0"/></radialGradient>
+    <radialGradient id="b" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(1100 80) rotate(115) scale(460)"><stop stop-color="#8567ED" stop-opacity=".28"/><stop offset="1" stop-color="#8567ED" stop-opacity="0"/></radialGradient>
+    <linearGradient id="brand" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#91E0CD"/><stop offset=".55" stop-color="#6EB2E9"/><stop offset="1" stop-color="#8C76EC"/></linearGradient>
+    <filter id="shadow" x="-15%" y="-15%" width="130%" height="145%"><feDropShadow dx="0" dy="24" stdDeviation="28" flood-color="#000" flood-opacity=".42"/></filter>
   </defs>
-  <rect width="1280" height="800" rx="36" fill="url(#bg)"/>
-  <circle cx="1150" cy="70" r="270" fill="#C6DAFF" fill-opacity=".36"/>
-  <circle cx="180" cy="760" r="250" fill="#C5F2FF" fill-opacity=".3"/>
-  <circle cx="1210" cy="760" r="230" fill="#D2C4FF" fill-opacity=".32"/>
+  <rect width="1200" height="820" rx="38" fill="url(#bg)"/><rect width="1200" height="820" rx="38" fill="url(#a)"/><rect width="1200" height="820" rx="38" fill="url(#b)"/>
+  <g transform="translate(18 18)" filter="url(#shadow)">
+    <rect width="1164" height="784" rx="31" fill="#171D25" fill-opacity=".74" stroke="white" stroke-opacity=".24" stroke-width="2"/>
+    <path d="M0 62H1164" stroke="white" stroke-opacity=".12"/><path d="M178 62V784" stroke="white" stroke-opacity=".11"/>
+    <rect x="17" y="13" width="38" height="38" rx="13" fill="url(#brand)"/><rect x="22" y="18" width="28" height="28" rx="9" stroke="white" stroke-opacity=".48"/><text x="36" y="40" text-anchor="middle" fill="white" font-size="18" font-weight="700" font-family="Arial">C</text>
+    <text x="66" y="29" fill="#F4F9FC" font-size="14" font-weight="700" font-family="Arial">Codex Provider Hub</text><text x="66" y="45" fill="#768593" font-size="6.5" letter-spacing="1.4" font-family="Arial">LOCAL CONTROL PLANE</text>
+    <rect x="943" y="17" width="115" height="28" rx="14" fill="white" fill-opacity=".045" stroke="white" stroke-opacity=".13"/><circle cx="960" cy="31" r="4" fill="#9BE3CF"/><text x="970" y="35" fill="#EAF3F7" font-size="8" font-weight="700" font-family="Arial">Live workspace</text><circle cx="1090" cy="31" r="13" fill="white" fill-opacity=".04" stroke="white" stroke-opacity=".12"/><circle cx="1127" cy="31" r="13" fill="white" fill-opacity=".04" stroke="white" stroke-opacity=".12"/>
 
-  <g filter="url(#shadow)">
-    <rect x="45" y="34" width="1190" height="712" rx="34" fill="url(#glass)" stroke="white" stroke-width="2"/>
-    <rect x="61" y="50" width="1158" height="680" rx="25" fill="#F7FBFF" fill-opacity=".5" stroke="#D5E4F2"/>
+    <g font-family="Arial">
+      <text x="24" y="91" fill="#687684" font-size="7" font-weight="700" letter-spacing="1.5">WORKSPACE</text>
+      <rect x="14" y="104" width="150" height="59" rx="16" fill="#9BE3CF" fill-opacity=".11" stroke="#9BE3CF" stroke-opacity=".23"/><rect x="24" y="114" width="38" height="38" rx="12" fill="#9BE3CF" fill-opacity=".11"/><text x="43" y="140" text-anchor="middle" fill="#9BE3CF" font-size="17">⌘</text><text x="73" y="129" fill="#F0F6F9" font-size="11">Status</text><text x="73" y="145" fill="#6E7B88" font-size="6.5">OVERVIEW</text><text x="147" y="136" text-anchor="end" fill="#6E7B88" font-size="6.5">01</text>
+      <g fill="white" fill-opacity=".025" stroke="white" stroke-opacity=".085"><rect x="14" y="174" width="150" height="59" rx="16"/><rect x="14" y="244" width="150" height="59" rx="16"/><rect x="14" y="314" width="150" height="59" rx="16"/></g>
+      <g fill="#909DA9"><text x="43" y="210" text-anchor="middle" font-size="17">↗</text><text x="43" y="280" text-anchor="middle" font-size="17">⌁</text><text x="43" y="350" text-anchor="middle" font-size="17">◎</text></g>
+      <text x="73" y="199" fill="#A4B0BA" font-size="11">Usage</text><text x="73" y="269" fill="#A4B0BA" font-size="11">Providers</text><text x="73" y="339" fill="#A4B0BA" font-size="11">Accounts</text>
+      <rect x="14" y="702" width="150" height="60" rx="16" fill="white" fill-opacity=".035" stroke="white" stroke-opacity=".12"/><rect x="24" y="713" width="38" height="38" rx="12" fill="#9BE3CF" fill-opacity=".1"/><text x="73" y="728" fill="#EDF5F8" font-size="9">Local runtime</text><text x="73" y="744" fill="#6E7C89" font-size="7">127.0.0.1:18080</text>
+    </g>
+
+    <g transform="translate(198 84)" font-family="Arial">
+      <rect width="940" height="206" rx="25" fill="white" fill-opacity=".035" stroke="white" stroke-opacity=".13"/>
+      <path d="M28 50H55" stroke="#9BE3CF" stroke-opacity=".7"/><text x="68" y="55" fill="#9BE3CF" font-size="9" font-weight="700" letter-spacing="1.5">CODEX INFRASTRUCTURE</text>
+      <text x="28" y="103" fill="#F7FBFE" font-size="38" font-weight="650">Every route, clearly visible.</text><text x="28" y="137" fill="#8D9AA6" font-size="13">Manage gateways, OAuth pools, providers and quota windows without a hosted control plane.</text>
+      <g transform="translate(28 157)" fill="#B9C5CE" font-size="7" font-weight="700"><rect width="75" height="26" rx="13" fill="white" fill-opacity=".045" stroke="white" stroke-opacity=".12"/><text x="37.5" y="17" text-anchor="middle">LOCAL ONLY</text><rect x="84" width="72" height="26" rx="13" fill="white" fill-opacity=".045" stroke="white" stroke-opacity=".12"/><text x="120" y="17" text-anchor="middle">ENCRYPTED</text><rect x="165" width="85" height="26" rx="13" fill="white" fill-opacity=".045" stroke="white" stroke-opacity=".12"/><text x="207.5" y="17" text-anchor="middle">AUTO REFRESH</text></g>
+      <circle cx="802" cy="102" r="72" fill="#73BFEF" fill-opacity=".13" stroke="#C7E4F4" stroke-opacity=".35"/><circle cx="802" cy="102" r="48" stroke="#9BE3CF" stroke-opacity=".22"/><circle cx="802" cy="102" r="22" stroke="#9BE3CF" stroke-opacity=".26"/><text x="802" y="109" text-anchor="middle" fill="#9BE3CF" font-size="21">✦</text><rect x="850" y="44" width="66" height="24" rx="12" fill="#171D25" fill-opacity=".72" stroke="white" stroke-opacity=".13"/><text x="883" y="60" text-anchor="middle" fill="#92A1AD" font-size="7">Gateway</text><rect x="850" y="143" width="58" height="24" rx="12" fill="#171D25" fill-opacity=".72" stroke="white" stroke-opacity=".13"/><text x="879" y="159" text-anchor="middle" fill="#92A1AD" font-size="7">OAuth</text>
+    </g>
+
+    <g transform="translate(198 306)" font-family="Arial">
+      <g><rect width="303" height="276" rx="22" fill="#0D131A" fill-opacity=".49" stroke="white" stroke-opacity=".12"/><rect x="16" y="16" width="31" height="31" rx="10" fill="white" fill-opacity=".045" stroke="white" stroke-opacity=".13"/><text x="31.5" y="37" text-anchor="middle" fill="#788692" font-size="8">01</text><text x="57" y="37" fill="#F2F8FA" font-size="14" font-weight="700">Local gateway</text><rect x="188" y="20" width="58" height="22" rx="11" fill="#9BE3CF" fill-opacity=".08" stroke="#9BE3CF" stroke-opacity=".22"/><text x="217" y="35" text-anchor="middle" fill="#9BE3CF" font-size="6.5" font-weight="700">HEALTHY</text><text x="57" y="53" fill="#6E7C89" font-size="7" font-family="ui-monospace,monospace">127.0.0.1:18080 · Sub2API</text><rect x="16" y="75" width="50" height="29" rx="10" fill="#F38B98" fill-opacity=".08" stroke="#F38B98" stroke-opacity=".24"/><text x="41" y="94" text-anchor="middle" fill="#F38B98" font-size="8" font-weight="700">Stop</text><path d="M16 122H287" stroke="white" stroke-opacity=".09"/><rect x="16" y="139" width="128" height="72" rx="16" fill="#060B11" fill-opacity=".58" stroke="white" stroke-opacity=".08"/><rect x="159" y="139" width="128" height="72" rx="16" fill="#060B11" fill-opacity=".58" stroke="white" stroke-opacity=".08"/><text x="29" y="158" fill="#687582" font-size="7">STATUS</text><text x="29" y="187" fill="#9BE3CF" font-size="22" font-weight="700">running</text><text x="172" y="158" fill="#687582" font-size="7">HEALTH</text><text x="172" y="187" fill="#F4F9FB" font-size="22" font-weight="700">healthy</text><g transform="translate(16 226)" fill="white" fill-opacity=".035" stroke="white" stroke-opacity=".085"><rect width="83" height="36" rx="11"/><rect x="94" width="83" height="36" rx="11"/><rect x="188" width="83" height="36" rx="11"/></g><text x="28" y="246" fill="#6D7B88" font-size="6">PORT</text><text x="28" y="257" fill="#DCE5EB" font-size="8">18080</text><text x="122" y="246" fill="#6D7B88" font-size="6">PROVIDERS</text><text x="122" y="257" fill="#DCE5EB" font-size="8">4</text><text x="216" y="246" fill="#6D7B88" font-size="6">ROUTES</text><text x="216" y="257" fill="#DCE5EB" font-size="8">28</text></g>
+      <g transform="translate(319)"><rect width="303" height="276" rx="22" fill="#0D131A" fill-opacity=".49" stroke="white" stroke-opacity=".12"/><rect x="16" y="16" width="31" height="31" rx="10" fill="white" fill-opacity=".045" stroke="white" stroke-opacity=".13"/><text x="31.5" y="37" text-anchor="middle" fill="#788692" font-size="8">02</text><text x="57" y="37" fill="#F2F8FA" font-size="14" font-weight="700">Model picker guard</text><rect x="202" y="20" width="76" height="22" rx="11" fill="#9BE3CF" fill-opacity=".08" stroke="#9BE3CF" stroke-opacity=".22"/><text x="240" y="35" text-anchor="middle" fill="#9BE3CF" font-size="6.5" font-weight="700">PROTECTED</text><text x="57" y="53" fill="#6E7C89" font-size="7" font-family="ui-monospace,monospace">Statsig · Local Storage · host-rules</text><rect x="16" y="75" width="62" height="29" rx="10" fill="white" fill-opacity=".04" stroke="white" stroke-opacity=".12"/><text x="47" y="94" text-anchor="middle" fill="#AAB6BF" font-size="8">Repair</text><path d="M16 122H287" stroke="white" stroke-opacity=".09"/><rect x="16" y="139" width="128" height="72" rx="16" fill="#060B11" fill-opacity=".58" stroke="white" stroke-opacity=".08"/><rect x="159" y="139" width="128" height="72" rx="16" fill="#060B11" fill-opacity=".58" stroke="white" stroke-opacity=".08"/><text x="29" y="158" fill="#687582" font-size="7">GUARD</text><text x="29" y="187" fill="#9BE3CF" font-size="22" font-weight="700">on</text><text x="172" y="158" fill="#687582" font-size="7">HIDDEN MODELS</text><text x="172" y="187" fill="#9BE3CF" font-size="22" font-weight="700">false</text><g transform="translate(16 226)" fill="white" fill-opacity=".035" stroke="white" stroke-opacity=".085"><rect width="83" height="36" rx="11"/><rect x="94" width="83" height="36" rx="11"/><rect x="188" width="83" height="36" rx="11"/></g><text x="28" y="246" fill="#6D7B88" font-size="6">CHATGPT</text><text x="28" y="257" fill="#DCE5EB" font-size="8">running</text><text x="122" y="246" fill="#6D7B88" font-size="6">HOST RULES</text><text x="122" y="257" fill="#9BE3CF" font-size="8">active</text><text x="216" y="246" fill="#6D7B88" font-size="6">PATCHED</text><text x="216" y="257" fill="#DCE5EB" font-size="8">09:42</text></g>
+      <g transform="translate(638)"><rect width="302" height="276" rx="22" fill="#0D131A" fill-opacity=".49" stroke="white" stroke-opacity=".12"/><rect x="16" y="16" width="31" height="31" rx="10" fill="#9BE3CF" fill-opacity=".09" stroke="#9BE3CF" stroke-opacity=".18"/><circle cx="31.5" cy="31.5" r="4" fill="#9BE3CF"/><text x="57" y="37" fill="#F2F8FA" font-size="14" font-weight="700">OAuth pool</text><text x="57" y="53" fill="#6E7C89" font-size="7">OpenAI / Codex accounts</text><rect x="16" y="75" width="128" height="72" rx="16" fill="#060B11" fill-opacity=".58" stroke="white" stroke-opacity=".08"/><rect x="159" y="75" width="127" height="72" rx="16" fill="#060B11" fill-opacity=".58" stroke="white" stroke-opacity=".08"/><text x="29" y="94" fill="#687582" font-size="7">AVAILABLE</text><text x="29" y="125" fill="#F4F9FB" font-size="23" font-weight="700">3 / 4</text><text x="172" y="94" fill="#687582" font-size="7">ERRORS</text><text x="172" y="125" fill="#F38B98" font-size="23" font-weight="700">1</text><text x="16" y="174" fill="#8896A2" font-size="8">5h average</text><text x="286" y="174" text-anchor="end" fill="#E2EBF0" font-size="8">86%</text><rect x="16" y="184" width="270" height="8" rx="4" fill="#050A10" stroke="white" stroke-opacity=".07"/><rect x="17" y="185" width="231" height="6" rx="3" fill="#9BE3CF"/><text x="16" y="219" fill="#8896A2" font-size="8">7d average</text><text x="286" y="219" text-anchor="end" fill="#E2EBF0" font-size="8">62%</text><rect x="16" y="229" width="270" height="8" rx="4" fill="#050A10" stroke="white" stroke-opacity=".07"/><rect x="17" y="230" width="167" height="6" rx="3" fill="#F1CC7A"/></g>
+    </g>
+
+    <g transform="translate(198 598)" font-family="Arial"><rect width="940" height="164" rx="22" fill="#0D131A" fill-opacity=".47" stroke="white" stroke-opacity=".12"/><text x="22" y="34" fill="#F2F8FA" font-size="14" font-weight="700">Providers</text><text x="22" y="52" fill="#6F7D89" font-size="7">OpenAI-compatible routes · model catalog sync</text><rect x="850" y="17" width="68" height="30" rx="11" fill="#9BE3CF"/><text x="884" y="37" text-anchor="middle" fill="#06221A" font-size="8" font-weight="700">Add route</text><g transform="translate(22 70)"><rect width="434" height="72" rx="15" fill="white" fill-opacity=".025" stroke="white" stroke-opacity=".085"/><rect x="462" width="434" height="72" rx="15" fill="white" fill-opacity=".025" stroke="white" stroke-opacity=".085"/><text x="14" y="25" fill="#F1F7FA" font-size="10" font-weight="700">AIHub Primary</text><text x="14" y="42" fill="#6E7B88" font-size="7" font-family="ui-monospace,monospace">api.example.com/v1 · aihub-</text><rect x="354" y="14" width="60" height="22" rx="11" fill="#9BE3CF" fill-opacity=".08" stroke="#9BE3CF" stroke-opacity=".2"/><text x="384" y="29" text-anchor="middle" fill="#9BE3CF" font-size="6.5">ACTIVE</text><text x="476" y="25" fill="#F1F7FA" font-size="10" font-weight="700">Backup Relay</text><text x="476" y="42" fill="#6E7B88" font-size="7" font-family="ui-monospace,monospace">relay.example.net/v1 · backup-</text><rect x="816" y="14" width="60" height="22" rx="11" fill="#9BE3CF" fill-opacity=".08" stroke="#9BE3CF" stroke-opacity=".2"/><text x="846" y="29" text-anchor="middle" fill="#9BE3CF" font-size="6.5">ACTIVE</text></g></g>
   </g>
-  <path d="M61 124H1219" stroke="#CADBED"/>
-  <path d="M168 124V730" stroke="#D5E3F1"/>
-
-  <rect x="84" y="70" width="42" height="42" rx="13" fill="url(#brand)" filter="url(#soft)"/>
-  <rect x="90" y="76" width="30" height="30" rx="10" stroke="white" stroke-opacity=".65"/>
-  <text x="105" y="100" text-anchor="middle" fill="white" font-size="22" font-weight="720" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif">C</text>
-  <text x="142" y="84" fill="#687A97" font-size="9" font-weight="700" letter-spacing="1.7" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif">CODEX</text>
-  <text x="142" y="103" fill="#172A4B" font-size="16" font-weight="760" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif">Provider Hub</text>
-  <rect x="986" y="71" width="130" height="31" rx="15.5" fill="white" fill-opacity=".68" stroke="white"/>
-  <circle cx="1004" cy="86.5" r="4" fill="#19B994"/>
-  <text x="1015" y="91" fill="#314865" font-size="10" font-weight="650" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif">Local workspace</text>
-  <path d="M1135 72V101" stroke="#D7E2EE"/>
-  <text x="1153" y="91" fill="#657692" font-size="10" font-weight="700" letter-spacing="1.2" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif">PRIVATE CONTROL CENTER</text>
-
-  <text x="84" y="151" fill="#8390A7" font-size="8" font-weight="700" letter-spacing="1.5" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif">WORKSPACE</text>
-  <g fill="white" fill-opacity=".58" stroke="#D8E6F3">
-    <rect x="79" y="170" width="63" height="54" rx="17"/>
-    <rect x="79" y="237" width="63" height="54" rx="17"/>
-    <rect x="79" y="304" width="63" height="54" rx="17"/>
-    <rect x="79" y="371" width="63" height="54" rx="17"/>
-    <rect x="79" y="647" width="63" height="54" rx="17"/>
-  </g>
-  <rect x="88" y="179" width="36" height="36" rx="12" fill="url(#brand)"/>
-  <path d="M99 190H113M99 197H113M99 204H113" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
-  <path d="M102 264H111M109 260L113 264L109 268" stroke="#607795" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M99 331L106 324L113 331L106 338L99 331Z" stroke="#607795" stroke-width="1.7"/>
-  <circle cx="106" cy="398" r="6" stroke="#607795" stroke-width="1.6"/>
-  <rect x="88" y="656" width="36" height="36" rx="12" fill="url(#brand)"/>
-  <path d="M106 664L108.4 671.6L116 674L108.4 676.4L106 684L103.6 676.4L96 674L103.6 671.6L106 664Z" fill="white"/>
-
-  <rect x="196" y="153" width="992" height="183" rx="26" fill="white" fill-opacity=".54" stroke="white" stroke-width="1.4"/>
-  <path d="M225 187H254" stroke="#5A83F7" stroke-width="1.6"/>
-  <text x="265" y="191" fill="#3D6CEB" font-size="11" font-weight="720" letter-spacing="2" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif">CONTROL CENTER</text>
-  <text x="225" y="238" fill="#172A49" font-size="38" font-weight="620" letter-spacing="-1" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif">See every <tspan fill="#416FF4">Codex resource.</tspan></text>
-  <text x="225" y="275" fill="#617693" font-size="15" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif">Manage gateways, authorized OAuth pools, providers and quotas from one private workspace.</text>
-  <circle cx="1054" cy="244" r="83" fill="url(#orb)"/>
-  <circle cx="1054" cy="244" r="52" stroke="white" stroke-opacity=".58"/>
-  <circle cx="1054" cy="244" r="30" stroke="white" stroke-opacity=".5"/>
-  <rect x="1036" y="226" width="36" height="36" rx="11" fill="white" fill-opacity=".23" stroke="white"/>
-  <path d="M1054 234L1057 242L1065 245L1057 248L1054 256L1051 248L1043 245L1051 242L1054 234Z" fill="white"/>
-  <g font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif" font-size="9" font-weight="650" fill="#536B8D">
-    <rect x="1010" y="168" width="66" height="24" rx="12" fill="white" fill-opacity=".65"/><text x="1043" y="184" text-anchor="middle">Gateway</text>
-    <rect x="1111" y="217" width="66" height="24" rx="12" fill="white" fill-opacity=".65"/><text x="1144" y="233" text-anchor="middle">Providers</text>
-    <rect x="991" y="292" width="66" height="24" rx="12" fill="white" fill-opacity=".65"/><text x="1024" y="308" text-anchor="middle">Accounts</text>
-  </g>
-
-  <g filter="url(#soft)">
-    <rect x="196" y="355" width="478" height="260" rx="25" fill="white" fill-opacity=".65" stroke="white"/>
-    <rect x="693" y="355" width="495" height="260" rx="25" fill="white" fill-opacity=".65" stroke="white"/>
-  </g>
-  <rect x="221" y="380" width="37" height="37" rx="12" fill="white" stroke="#E0EAF4"/>
-  <text x="239.5" y="403" text-anchor="middle" fill="#55719B" font-size="10" font-weight="720" font-family="ui-monospace,SFMono-Regular,Menlo,monospace">01</text>
-  <text x="274" y="398" fill="#1B2D4B" font-size="18" font-weight="740" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif">Local gateway</text>
-  <text x="274" y="418" fill="#6E819C" font-size="11" font-family="ui-monospace,SFMono-Regular,Menlo,monospace">127.0.0.1:18080 · Docker Sub2API</text>
-  <rect x="221" y="439" width="61" height="34" rx="17" fill="url(#brand)"/>
-  <text x="251.5" y="461" text-anchor="middle" fill="white" font-size="11" font-weight="720" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif">Start</text>
-  <rect x="291" y="439" width="68" height="34" rx="17" fill="white" fill-opacity=".7" stroke="#D9E4EF"/>
-  <text x="325" y="461" text-anchor="middle" fill="#637794" font-size="11" font-weight="650" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif">Refresh</text>
-  <path d="M221 493H649" stroke="#DCE7F1"/>
-  <text x="221" y="529" fill="#8391A8" font-size="10" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif">STATUS</text>
-  <text x="221" y="563" fill="#17AE8C" font-size="25" font-weight="760" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif">running</text>
-  <text x="440" y="529" fill="#8391A8" font-size="10" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif">HEALTH</text>
-  <text x="440" y="563" fill="#182B49" font-size="25" font-weight="760" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif">healthy</text>
-
-  <rect x="718" y="380" width="37" height="37" rx="12" fill="white" stroke="#E0EAF4"/>
-  <text x="736.5" y="403" text-anchor="middle" fill="#55719B" font-size="10" font-weight="720" font-family="ui-monospace,SFMono-Regular,Menlo,monospace">02</text>
-  <text x="771" y="398" fill="#1B2D4B" font-size="18" font-weight="740" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif">Codex model picker guard</text>
-  <rect x="1052" y="379" width="72" height="25" rx="12.5" fill="#E8FFF7" stroke="#BEEBDE"/>
-  <text x="1088" y="396" text-anchor="middle" fill="#159574" font-size="9" font-weight="720" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif">protected</text>
-  <text x="771" y="420" fill="#6E819C" font-size="10" font-family="ui-monospace,SFMono-Regular,Menlo,monospace">Statsig · Local Storage · host-rules</text>
-  <rect x="718" y="439" width="78" height="34" rx="17" fill="#FFEDF1" stroke="#FFD1DA"/>
-  <text x="757" y="461" text-anchor="middle" fill="#DE5C76" font-size="10" font-weight="720" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif">Disable</text>
-  <rect x="805" y="439" width="78" height="34" rx="17" fill="url(#brand)"/>
-  <text x="844" y="461" text-anchor="middle" fill="white" font-size="10" font-weight="720" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif">Repair</text>
-  <rect x="892" y="439" width="68" height="34" rx="17" fill="white" fill-opacity=".7" stroke="#D9E4EF"/>
-  <text x="926" y="461" text-anchor="middle" fill="#637794" font-size="10" font-weight="650" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif">Refresh</text>
-  <path d="M718 493H1163" stroke="#DCE7F1"/>
-  <text x="718" y="529" fill="#8391A8" font-size="10" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif">GUARD</text>
-  <text x="718" y="563" fill="#17AE8C" font-size="25" font-weight="760" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif">on</text>
-  <text x="905" y="529" fill="#8391A8" font-size="10" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif">USE_HIDDEN_MODELS</text>
-  <text x="905" y="563" fill="#17AE8C" font-size="25" font-weight="760" font-family="ui-monospace,SFMono-Regular,Menlo,monospace">false</text>
-
-  <g filter="url(#soft)">
-    <rect x="196" y="636" width="310" height="70" rx="21" fill="white" fill-opacity=".58" stroke="white"/>
-    <rect x="521" y="636" width="325" height="70" rx="21" fill="white" fill-opacity=".58" stroke="white"/>
-    <rect x="861" y="636" width="327" height="70" rx="21" fill="white" fill-opacity=".58" stroke="white"/>
-  </g>
-  <circle cx="230" cy="671" r="17" fill="#EDF4FF"/><path d="M223 671L228 676L237 665" stroke="#4778F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <text x="258" y="666" fill="#29405F" font-size="13" font-weight="700" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif">Local-first</text><text x="258" y="684" fill="#71839C" font-size="10" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif">Credentials stay on the device</text>
-  <circle cx="555" cy="671" r="17" fill="#EDF4FF"/><path d="M548 671H562M558 667L562 671L558 675" stroke="#4778F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <text x="583" y="666" fill="#29405F" font-size="13" font-weight="700" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif">Unified routing</text><text x="583" y="684" fill="#71839C" font-size="10" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif">Gateway and providers in one place</text>
-  <circle cx="895" cy="671" r="17" fill="#EDF4FF"/><path d="M895 663V671L900 675M887 671A8 8 0 1 0 895 663" stroke="#4778F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <text x="923" y="666" fill="#29405F" font-size="13" font-weight="700" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif">Live refresh</text><text x="923" y="684" fill="#71839C" font-size="10" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif">Quotas and health stay in sync</text>
 </svg>
