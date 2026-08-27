@@ -10,7 +10,7 @@
     "frontendDist": "../dist"
   },
   "app": {
-    "macOSPrivateApi": false,
+    "macOSPrivateApi": true,
     "windows": [
       {
         "label": "main",
@@ -23,8 +23,15 @@
         "fullscreen": false,
         "visible": false,
         "center": false,
-        "decorations": true,
-        "skipTaskbar": true
+        "decorations": false,
+        "transparent": true,
+        "shadow": true,
+        "acceptFirstMouse": true,
+        "skipTaskbar": true,
+        "windowEffects": {
+          "effects": ["popover"],
+          "radius": 26
+        }
       }
     ],
     "security": {
