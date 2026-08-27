@@ -1,94 +1,167 @@
+<p align="center">
+  <img src="docs/assets/hero.svg" alt="Codex Provider Hub — local macOS control center for Codex providers and OAuth pools" width="100%" />
+</p>
+
+<p align="center">
+  <a href="README.md"><strong>English</strong></a> ·
+  <a href="README.zh-CN.md">简体中文</a> ·
+  <a href="README.ja.md">日本語</a>
+</p>
+
+<p align="center">
+  <a href="https://github.com/ningsam/codex-provider-hub/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/ningsam/codex-provider-hub/actions/workflows/ci.yml/badge.svg" /></a>
+  <a href="LICENSE"><img alt="MIT License" src="https://img.shields.io/github/license/ningsam/codex-provider-hub?style=flat-square" /></a>
+  <img alt="macOS 11+" src="https://img.shields.io/badge/macOS-11%2B-111827?style=flat-square&logo=apple&logoColor=white" />
+  <a href="https://github.com/ningsam/codex-provider-hub/stargazers"><img alt="GitHub Stars" src="https://img.shields.io/github/stars/ningsam/codex-provider-hub?style=flat-square" /></a>
+</p>
+
 # Codex Provider Hub
 
-macOS 菜单栏（托盘）看板：接管本机 [Sub2API](https://github.com/Wei-Shaw/sub2api) 多供应商 Codex 网关，并实时展示用量 / 额度。
+**A local-first macOS control center for Codex providers, OAuth account pools, model routing, and live usage quotas.**
 
-## 功能
+Codex Provider Hub wraps a local [Sub2API](https://github.com/Wei-Shaw/sub2api) deployment in a native menu-bar dashboard. Start or stop the gateway, add OpenAI-compatible providers, monitor account quotas, keep the ChatGPT model picker usable, and inspect Cursor or relay usage without sending credentials to a hosted control plane.
 
-- **本地网关** — 起停 / 健康检查（默认 `127.0.0.1:18080`），供应商与模型数量
-- **Codex 模型选择器守护** — 修复 ChatGPT.app 因 Statsig `use_hidden_models=true` 滤空自定义模型的问题；一键补丁 Local Storage，并以 `--host-rules` 防刷新方式重启 ChatGPT；默认后台巡检
-- **供应商** — 输入上游 Base URL + API Key，接入本地 Sub2API，并同步到 Codex model catalog
-- **Sub2API 号池** — 仅统计 OpenAI/Codex **OAuth** 真号；每账号独立 5h/7d 额度卡，支持删除；中转站不计入
-- **AIHub 中转站** — 钱包余额与今日消耗（优先读 Sub2API 里 AIHub 账号 key，可在卡内设置/清除 Key）
-- **Cursor 多账号** — 导入本机会话或粘贴 JWT，逐账号显示套餐用量（token 本地加密存储）
-- **托盘交互** — 点击菜单栏图标，看板贴在图标下方弹出（非屏幕居中）
+> [!IMPORTANT]
+> This project is early-stage and macOS-first. It currently builds from source; downloadable signed releases are on the [roadmap](ROADMAP.md).
+>
+> This is an unofficial community project and is not affiliated with or endorsed by OpenAI, ChatGPT, Cursor, AIHub, or Sub2API. Use only accounts and providers you own or are authorized to manage.
 
-UI 为深色电影感控制台风格（参考 [CineFlux](https://cine-flux.com) 的气质，非抄袭品牌资产）。
+## Preview
 
-## 技术栈
+<p align="center">
+  <img src="docs/assets/dashboard.svg" alt="Codex Provider Hub liquid-glass dashboard" width="920" />
+</p>
 
-- Tauri v2 + Rust
-- React + TypeScript + Vite
+Documentation is available in English, Simplified Chinese, and Japanese. In-app English/Japanese localization is one of the next milestones.
 
-## 环境要求
+## Why this exists
 
-- macOS（推荐 Apple Silicon）
-- [Node.js](https://nodejs.org/) 20+
-- [Rust](https://rustup.rs/) stable
-- 可用的 Sub2API 部署（Docker Compose），并带有 `./sub2api` 管理脚本
-- 模型选择器守护推荐本机 Python3 + `plyvel`（Hub 会优先走捆绑的 patch 脚本；无 plyvel 时回退字节替换）
+A local multi-provider setup usually spreads control across shell scripts, Docker, configuration files, account dashboards, and model catalogs. Codex Provider Hub brings those operations into one visible workspace while keeping sensitive data on your Mac.
 
-## 配置说明
+| Capability | What it gives you |
+| --- | --- |
+| **Local gateway control** | Start, stop, refresh, and health-check the default `127.0.0.1:18080` Sub2API gateway. |
+| **Provider onboarding** | Add OpenAI-compatible upstreams, probe their models, and sync prefixed model IDs into the Codex catalog. |
+| **OAuth account pool** | Import authorized OpenAI/Codex OAuth accounts and inspect per-account 5-hour / 7-day quota windows. |
+| **Model picker guard** | Repair `use_hidden_models` and optionally launch ChatGPT with host rules that reduce remote configuration overrides. |
+| **Relay visibility** | Track AIHub balance and daily usage from the same dashboard. |
+| **Cursor account view** | Import the local Cursor session or add authorized tokens and inspect plan usage per account. |
+| **Menu-bar workflow** | Keep the app out of the way and open the dashboard directly beneath the macOS menu-bar item. |
 
-| 数据源 | 凭据 / 路径怎么找 |
-|--------|-------------------|
-| Sub2API 安装目录 | 环境变量 `SUB2API_DIR` 或 `CODEX_PROVIDER_HUB_SUB2API_DIR`；否则默认 `$HOME/Documents/Codex/sub2api-ready` |
-| 网关 API Key | `$SUB2API_DIR/state/gateway-api-key` |
-| Sub2API Admin | `$SUB2API_DIR/.env` 中的 `ADMIN_EMAIL` / `ADMIN_PASSWORD`（供应商 / 号池管理） |
-| AIHub Key | 优先 Sub2API `AIHub` 账号；其次 Hub 内「设置 Key」；再次 `ANYROUTER_API_KEY` / `~/.zshrc`（注意不要把 AnyRouter key 当成 AIHub key） |
-| Codex 配置（可选保存） | `~/.codex/config.toml` + model catalog JSON |
-| Cursor Token | 加密保存在应用数据目录；也可从 Cursor 的 `state.vscdb` 一键导入 |
+## How it fits together
 
-示例：
-
-```bash
-export SUB2API_DIR="$HOME/path/to/your/sub2api-ready"
+```mermaid
+flowchart LR
+    A[Codex / ChatGPT] -->|OpenAI-compatible API| B[Local gateway<br/>127.0.0.1:18080]
+    B --> C[Authorized OAuth account pool]
+    B --> D[OpenAI-compatible providers]
+    E[Codex Provider Hub] --> B
+    E --> C
+    E --> D
+    E --> F[Codex model catalog]
 ```
 
-## 如何添加供应商
+Codex Provider Hub is the control layer. Sub2API remains the local routing layer and is installed separately.
 
-1. 确保本地网关已启动（看板「本地网关」为 healthy，或在 `$SUB2API_DIR` 执行 `./sub2api up`）。
-2. 打开看板中的 **供应商** 卡片 → **添加**。
-3. 填写显示名、Base URL（如 `https://xxx.example.com/v1`）、API Key、模型前缀。
-4. 可先 **仅探测**，再 **添加供应商**（勾选「添加时探测并同步模型」）。
-5. Hub 会创建 Sub2API `apikey` 账号、备份并更新 Codex catalog（**不会**改 `model_provider` id）。
-6. 在 Codex 中选择 `{prefix}-{model}` 即可（流量仍走 `http://127.0.0.1:18080/v1`）。
+## Requirements
 
-本机若 `SECURITY_URL_ALLOWLIST_ENABLED=false`，一般无需改 compose。若重新打开白名单后又出现 `502 host not allowed`，写入 `SECURITY_URL_ALLOWLIST_UPSTREAM_HOSTS` 后需对容器 **force-recreate**。
+- macOS 11 or later; Apple Silicon is the primary tested target
+- [Node.js](https://nodejs.org/) 20 or later
+- [Rust](https://rustup.rs/) stable
+- A working local Sub2API deployment with its `./sub2api` management script
+- Optional for the model picker guard: Python 3 and `plyvel` for the preferred LevelDB patch path
 
-## Codex 模型选择器守护
-
-ChatGPT 桌面端会用 Statsig 动态配置过滤非官方 slug。守护卡可：
-
-1. 将 Local Storage 中 `use_hidden_models` 置为 `false`
-2. 以屏蔽 Statsig CDN 的方式重启 ChatGPT（`--host-rules`）
-
-**请勿从 Dock 裸启动 ChatGPT**，否则 Statsig 可能再次覆盖。可用 Hub 内「立即修复并防刷新启动」，或 `~/Applications/ChatGPT (Guarded).command`（若已生成）。
-
-## 开发
+## Quick start
 
 ```bash
+git clone https://github.com/ningsam/codex-provider-hub.git
+cd codex-provider-hub
 npm install
-source "$HOME/.cargo/env"   # 如有需要
+
+# Point the Hub at your local Sub2API installation.
+export SUB2API_DIR="$HOME/path/to/your/sub2api-ready"
+
+# Start the desktop app in development mode.
 npm run tauri dev
 ```
 
-## 构建
+Build a local application bundle with:
 
 ```bash
 npm run tauri build
 ```
 
-产物：
+Expected macOS outputs:
 
-- `src-tauri/target/release/bundle/macos/Codex Provider Hub.app`
-- `src-tauri/target/release/bundle/dmg/*_aarch64.dmg`
+```text
+src-tauri/target/release/bundle/macos/Codex Provider Hub.app
+src-tauri/target/release/bundle/dmg/*_aarch64.dmg
+```
 
-## 安全说明
+<details>
+<summary><strong>Configuration reference</strong></summary>
 
-- API Key **不会**写死在源码里，运行时从环境变量 / 本地文件 / 加密 app-data 读取
-- Cursor / AIHub 自定义 Key 使用 AES-256-GCM 加密存储
-- 保存供应商配置前会备份 `config.toml` / catalog，且不改写 `model_provider` id
+| Data source | Credential or path |
+| --- | --- |
+| Sub2API directory | `SUB2API_DIR` or `CODEX_PROVIDER_HUB_SUB2API_DIR`; otherwise `$HOME/Documents/Codex/sub2api-ready` |
+| Gateway API key | `$SUB2API_DIR/state/gateway-api-key` |
+| Sub2API admin | `ADMIN_EMAIL` and `ADMIN_PASSWORD` in `$SUB2API_DIR/.env` |
+| AIHub key | Sub2API AIHub account first; then the in-app stored key; then `ANYROUTER_API_KEY` / `~/.zshrc` fallback |
+| Codex configuration | `~/.codex/config.toml` plus the Codex model catalog JSON |
+| Cursor token | Encrypted in the app data directory or imported from Cursor's local `state.vscdb` |
+
+</details>
+
+<details>
+<summary><strong>Adding an OpenAI-compatible provider</strong></summary>
+
+1. Confirm that the local gateway is healthy, or run `./sub2api up` inside your Sub2API directory.
+2. Open **Providers** in Codex Provider Hub and choose **Add**.
+3. Enter a display name, Base URL, API key, and model prefix.
+4. Probe first if desired, then add the provider and sync its models.
+5. The Hub creates the Sub2API `apikey` account and updates the Codex catalog after making a backup.
+6. Select `{prefix}-{model}` in Codex; requests continue through `http://127.0.0.1:18080/v1`.
+
+If Sub2API URL allowlisting is enabled and you receive `502 host not allowed`, add the upstream host to `SECURITY_URL_ALLOWLIST_UPSTREAM_HOSTS` and force-recreate the container.
+
+</details>
+
+<details>
+<summary><strong>About the model picker guard</strong></summary>
+
+The ChatGPT desktop app can dynamically hide non-official model slugs. The optional guard can:
+
+1. Set Statsig `use_hidden_models` to `false` in local storage.
+2. Relaunch ChatGPT with host rules that reduce the chance of the value being overwritten remotely.
+
+This behavior depends on implementation details of third-party software and may break after upstream updates. Review changes before use and keep backups.
+
+</details>
+
+## Security model
+
+- API keys are not hardcoded in the repository.
+- Custom Cursor and AIHub credentials are encrypted at rest with AES-256-GCM.
+- Provider credentials are used for local probe or Sub2API configuration requests and are not stored in browser storage.
+- Codex configuration and model catalog files are backed up before modification.
+- Sensitive reports should follow [SECURITY.md](SECURITY.md); never paste API keys, OAuth tokens, JWTs, or unredacted `.env` files into public issues.
+
+This tool displays and routes authorized resources; it does not bypass provider quotas or terms.
+
+## Roadmap
+
+Near-term priorities include downloadable macOS builds, smoother first-run setup, in-app English/Chinese/Japanese localization, diagnostics export, and richer provider health history. See [ROADMAP.md](ROADMAP.md) for the maintained plan.
+
+## Contributing
+
+Contributions are welcome, especially around packaging, localization, documentation, provider compatibility, and macOS testing. Read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request.
+
+For bugs and feature requests, use the repository's structured [issue templates](https://github.com/ningsam/codex-provider-hub/issues/new/choose).
+
+## Support the project
+
+If Codex Provider Hub makes your local setup easier, consider giving the repository a star. It helps other developers discover the project and shows which direction is worth maintaining.
 
 ## License
 
-MIT
+Released under the [MIT License](LICENSE).

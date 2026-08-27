@@ -1,0 +1,47 @@
+name: Feature request
+description: Propose an improvement to Codex Provider Hub
+title: "[Feature]: "
+labels:
+  - enhancement
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What workflow is difficult today? Focus on the user problem rather than only the desired implementation.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: Describe the behavior, interface, or integration you would like.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Explain current workarounds or other designs you evaluated.
+
+  - type: textarea
+    id: security
+    attributes:
+      label: Local-first and security impact
+      description: Does this add new credential storage, network traffic, permissions, or third-party dependencies?
+    validations:
+      required: true
+
+  - type: dropdown
+    id: contribution
+    attributes:
+      label: Are you willing to help implement it?
+      options:
+        - Yes, I can open a pull request
+        - Yes, with design or testing guidance
+        - I can test it
+        - Not currently
+    validations:
+      required: true

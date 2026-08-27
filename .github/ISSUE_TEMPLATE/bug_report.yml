@@ -1,0 +1,91 @@
+name: Bug report
+description: Report a reproducible problem in Codex Provider Hub
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug. Remove all secrets before submitting. Never include API keys, OAuth tokens, JWTs, account exports, or unredacted `.env` files.
+
+  - type: input
+    id: version
+    attributes:
+      label: Hub version or commit
+      description: Release version or commit SHA you tested.
+      placeholder: v0.1.0 or 65a7c42
+    validations:
+      required: true
+
+  - type: dropdown
+    id: architecture
+    attributes:
+      label: Mac architecture
+      options:
+        - Apple Silicon (arm64)
+        - Intel (x86_64)
+        - Other / unknown
+    validations:
+      required: true
+
+  - type: input
+    id: macos
+    attributes:
+      label: macOS version
+      placeholder: macOS 15.6
+    validations:
+      required: true
+
+  - type: input
+    id: sub2api
+    attributes:
+      label: Sub2API version or commit
+      description: Use "not applicable" when the problem does not involve Sub2API.
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What happened?
+      description: Describe the observed behavior and its impact.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Reproduction steps
+      placeholder: |
+        1. Open ...
+        2. Click ...
+        3. Observe ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Redacted logs or screenshots
+      description: Redact credentials, emails, cookies, tokens, and private paths. Drag screenshots here when useful.
+      render: shell
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Safety checklist
+      options:
+        - label: I searched existing issues for duplicates.
+          required: true
+        - label: I removed API keys, OAuth tokens, JWTs, account exports, and other sensitive data.
+          required: true
+        - label: I used only accounts and providers I am authorized to manage.
+          required: true
