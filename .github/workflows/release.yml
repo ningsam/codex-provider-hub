@@ -1,0 +1,130 @@
+name: Release macOS
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [release]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-macos-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    name: Read application version
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Read version
+        id: version
+        run: echo "version=$(jq -r '.version' src-tauri/tauri.conf.json)" >> "$GITHUB_OUTPUT"
+
+  build:
+    name: macOS ${{ matrix.label }}
+    needs: prepare
+    runs-on: macos-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - label: Apple Silicon
+            target: aarch64-apple-darwin
+          - label: Intel
+            target: x86_64-apple-darwin
+
+    env:
+      MACOSX_DEPLOYMENT_TARGET: "11.0"
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin,x86_64-apple-darwin
+
+      - name: Cache Rust build output
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: ./src-tauri -> target
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Build and upload macOS bundles
+        uses: tauri-apps/tauri-action@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: v${{ needs.prepare.outputs.version }}
+          releaseName: Codex Provider Hub v${{ needs.prepare.outputs.version }}
+          releaseBody: |
+            ## Codex Provider Hub preview
+
+            This preview release includes native macOS bundles for Apple Silicon and Intel.
+
+            - The application is ad-hoc signed so Apple Silicon downloads are not treated as damaged.
+            - The build is not yet Apple-notarized. macOS may ask you to approve the app in System Settings → Privacy & Security.
+            - Codex Provider Hub expects an existing local Sub2API installation. Read the README before first launch.
+            - Use only accounts and providers you own or are authorized to manage.
+
+            SHA-256 checksums are attached as `SHA256SUMS.txt` after both builds complete.
+          releaseDraft: true
+          prerelease: true
+          generateReleaseNotes: true
+          releaseAssetNamePattern: Codex-Provider-Hub_[version]_[arch][ext]
+          uploadWorkflowArtifacts: true
+          workflowArtifactNamePattern: macos-[arch]-[bundle]
+          retryAttempts: 2
+          args: --target ${{ matrix.target }}
+
+  publish:
+    name: Publish preview release
+    needs: [prepare, build]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      TAG_NAME: v${{ needs.prepare.outputs.version }}
+
+    steps:
+      - name: Download release assets
+        run: |
+          mkdir -p release-assets
+          gh release download "$TAG_NAME" \
+            --repo "$GITHUB_REPOSITORY" \
+            --dir release-assets
+
+      - name: Generate SHA-256 checksums
+        run: |
+          cd release-assets
+          find . -maxdepth 1 -type f ! -name 'SHA256SUMS.txt' -print0 \
+            | sort -z \
+            | xargs -0 sha256sum \
+            | sed 's#  \./#  #' > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+
+      - name: Upload checksums and publish prerelease
+        run: |
+          gh release upload "$TAG_NAME" release-assets/SHA256SUMS.txt \
+            --repo "$GITHUB_REPOSITORY" \
+            --clobber
+          gh release edit "$TAG_NAME" \
+            --repo "$GITHUB_REPOSITORY" \
+            --draft=false \
+            --prerelease
