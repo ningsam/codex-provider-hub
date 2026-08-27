@@ -10,6 +10,7 @@
 
 <p align="center">
   <a href="https://github.com/ningsam/codex-provider-hub/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/ningsam/codex-provider-hub/actions/workflows/ci.yml/badge.svg" /></a>
+  <a href="https://github.com/ningsam/codex-provider-hub/releases"><img alt="Preview release" src="https://img.shields.io/github/v/release/ningsam/codex-provider-hub?include_prereleases&style=flat-square" /></a>
   <a href="LICENSE"><img alt="MIT License" src="https://img.shields.io/github/license/ningsam/codex-provider-hub?style=flat-square" /></a>
   <img alt="macOS 11+" src="https://img.shields.io/badge/macOS-11%2B-111827?style=flat-square&logo=apple&logoColor=white" />
   <a href="https://github.com/ningsam/codex-provider-hub/stargazers"><img alt="GitHub Stars" src="https://img.shields.io/github/stars/ningsam/codex-provider-hub?style=flat-square" /></a>
@@ -17,22 +18,26 @@
 
 # Codex Provider Hub
 
-**A local-first macOS control center for Codex providers, OAuth account pools, model routing, and live usage quotas.**
+**A local-first macOS control plane for Codex providers, OAuth account pools, model routing, and live usage quotas.**
 
-Codex Provider Hub wraps a local [Sub2API](https://github.com/Wei-Shaw/sub2api) deployment in a native menu-bar dashboard. Start or stop the gateway, add OpenAI-compatible providers, monitor account quotas, keep the ChatGPT model picker usable, and inspect Cursor or relay usage without sending credentials to a hosted control plane.
+Codex Provider Hub wraps a local [Sub2API](https://github.com/Wei-Shaw/sub2api) deployment in a native menu-bar workspace. Start or stop the gateway, add OpenAI-compatible providers, inspect account quotas, keep the ChatGPT model picker usable, and monitor Cursor or relay usage without sending credentials to a hosted dashboard.
+
+<p align="center">
+  <a href="https://github.com/ningsam/codex-provider-hub/releases"><strong>Download the macOS preview</strong></a>
+  ·
+  <a href="#build-from-source">Build from source</a>
+</p>
 
 > [!IMPORTANT]
-> This project is early-stage and macOS-first. It currently builds from source; downloadable signed releases are on the [roadmap](ROADMAP.md).
+> This is an early macOS-first preview. Release artifacts are ad-hoc signed but are not yet Apple-notarized, so macOS may ask you to approve the app in **System Settings → Privacy & Security**.
 >
 > This is an unofficial community project and is not affiliated with or endorsed by OpenAI, ChatGPT, Cursor, AIHub, or Sub2API. Use only accounts and providers you own or are authorized to manage.
 
 ## Preview
 
 <p align="center">
-  <img src="docs/assets/dashboard.svg" alt="Codex Provider Hub liquid-glass dashboard" width="920" />
+  <img src="docs/assets/dashboard.svg" alt="Codex Provider Hub native liquid-glass dashboard" width="920" />
 </p>
-
-Documentation is available in English, Simplified Chinese, and Japanese. In-app English/Japanese localization is one of the next milestones.
 
 ## Why this exists
 
@@ -41,12 +46,23 @@ A local multi-provider setup usually spreads control across shell scripts, Docke
 | Capability | What it gives you |
 | --- | --- |
 | **Local gateway control** | Start, stop, refresh, and health-check the default `127.0.0.1:18080` Sub2API gateway. |
-| **Provider onboarding** | Add OpenAI-compatible upstreams, probe their models, and sync prefixed model IDs into the Codex catalog. |
+| **Provider onboarding** | Add OpenAI-compatible upstreams, probe models, and sync prefixed model IDs into the Codex catalog. |
 | **OAuth account pool** | Import authorized OpenAI/Codex OAuth accounts and inspect per-account 5-hour / 7-day quota windows. |
-| **Model picker guard** | Repair `use_hidden_models` and optionally launch ChatGPT with host rules that reduce remote configuration overrides. |
+| **Model picker guard** | Repair local `use_hidden_models` state and optionally relaunch ChatGPT with protective host rules. |
 | **Relay visibility** | Track AIHub balance and daily usage from the same dashboard. |
 | **Cursor account view** | Import the local Cursor session or add authorized tokens and inspect plan usage per account. |
-| **Menu-bar workflow** | Keep the app out of the way and open the dashboard directly beneath the macOS menu-bar item. |
+| **Native menu-bar workflow** | Open a compact, transparent liquid-glass workspace directly beneath the macOS menu-bar item. |
+
+## Install the preview
+
+1. Open [GitHub Releases](https://github.com/ningsam/codex-provider-hub/releases).
+2. Download the `.dmg` matching your Mac:
+   - `aarch64` for Apple Silicon
+   - `x86_64` for Intel
+3. Move **Codex Provider Hub.app** to Applications.
+4. Point the app at an existing local Sub2API installation with `SUB2API_DIR` or `CODEX_PROVIDER_HUB_SUB2API_DIR`.
+
+The preview is ad-hoc signed. If macOS blocks the first launch, open **System Settings → Privacy & Security** and choose **Open Anyway**. Checksums are published with every automated release in `SHA256SUMS.txt`.
 
 ## How it fits together
 
@@ -65,37 +81,26 @@ Codex Provider Hub is the control layer. Sub2API remains the local routing layer
 
 ## Requirements
 
-- macOS 11 or later; Apple Silicon is the primary tested target
-- [Node.js](https://nodejs.org/) 20 or later
-- [Rust](https://rustup.rs/) stable
-- A working local Sub2API deployment with its `./sub2api` management script
+- macOS 11 or later
+- An existing local Sub2API deployment with its `./sub2api` management script
 - Optional for the model picker guard: Python 3 and `plyvel` for the preferred LevelDB patch path
+- Node.js 20+ and Rust stable only when building from source
 
-## Quick start
+## Build from source
 
 ```bash
 git clone https://github.com/ningsam/codex-provider-hub.git
 cd codex-provider-hub
 npm install
 
-# Point the Hub at your local Sub2API installation.
 export SUB2API_DIR="$HOME/path/to/your/sub2api-ready"
-
-# Start the desktop app in development mode.
 npm run tauri dev
 ```
 
-Build a local application bundle with:
+Create a local bundle with:
 
 ```bash
 npm run tauri build
-```
-
-Expected macOS outputs:
-
-```text
-src-tauri/target/release/bundle/macos/Codex Provider Hub.app
-src-tauri/target/release/bundle/dmg/*_aarch64.dmg
 ```
 
 <details>
@@ -129,12 +134,7 @@ If Sub2API URL allowlisting is enabled and you receive `502 host not allowed`, a
 <details>
 <summary><strong>About the model picker guard</strong></summary>
 
-The ChatGPT desktop app can dynamically hide non-official model slugs. The optional guard can:
-
-1. Set Statsig `use_hidden_models` to `false` in local storage.
-2. Relaunch ChatGPT with host rules that reduce the chance of the value being overwritten remotely.
-
-This behavior depends on implementation details of third-party software and may break after upstream updates. Review changes before use and keep backups.
+The ChatGPT desktop app can dynamically hide non-official model slugs. The optional guard can set Statsig `use_hidden_models` to `false` in local storage and relaunch ChatGPT with host rules that reduce remote overwrites. This depends on third-party implementation details and may break after upstream updates; review changes and keep backups.
 
 </details>
 
@@ -148,13 +148,18 @@ This behavior depends on implementation details of third-party software and may 
 
 This tool displays and routes authorized resources; it does not bypass provider quotas or terms.
 
-## Roadmap
+## Release and quality pipeline
 
-Near-term priorities include downloadable macOS builds, smoother first-run setup, in-app English/Chinese/Japanese localization, diagnostics export, and richer provider health history. See [ROADMAP.md](ROADMAP.md) for the maintained plan.
+- Every pull request runs the TypeScript/Vite build and an Apple Silicon native Tauri bundle check.
+- Pushing the maintained `release` branch builds both Apple Silicon and Intel bundles.
+- Release assets are published as a GitHub prerelease with SHA-256 checksums.
+- Developer ID signing and Apple notarization remain the next distribution milestone.
+
+See [CHANGELOG.md](CHANGELOG.md) and [ROADMAP.md](ROADMAP.md).
 
 ## Contributing
 
-Contributions are welcome, especially around packaging, localization, documentation, provider compatibility, and macOS testing. Read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request.
+Contributions are welcome, especially around packaging, localization, onboarding, provider compatibility, and macOS testing. Read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request.
 
 For bugs and feature requests, use the repository's structured [issue templates](https://github.com/ningsam/codex-provider-hub/issues/new/choose).
 

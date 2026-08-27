@@ -11,16 +11,18 @@ This roadmap communicates direction rather than fixed delivery dates. Priorities
 - AIHub balance visibility
 - Cursor account usage view
 - Native macOS menu-bar workspace
-- Responsive liquid-glass interface
+- Responsive native liquid-glass interface with dark and light themes
+- English, Simplified Chinese, and Japanese documentation
+- Frontend and native macOS CI
+- Automated Apple Silicon and Intel preview releases with SHA-256 checksums
 
-## Next: distribution and onboarding
+## Next: trustworthy distribution and onboarding
 
-- Downloadable macOS release artifacts
-- Apple signing and notarization path
+- Developer ID signing and Apple notarization
 - First-run setup wizard for locating or validating Sub2API
 - Clear diagnostics export with automatic secret redaction
-- Release notes and upgrade guidance
-- Homebrew Cask evaluation after stable releases exist
+- Upgrade, rollback, and uninstall guidance
+- Homebrew Cask evaluation after stable notarized releases exist
 
 ## Next: internationalization and daily use
 
