@@ -3,7 +3,7 @@ name: Release macOS
 on:
   workflow_dispatch:
   push:
-    branches: [release]
+    branches: [preview-release]
 
 permissions:
   contents: write
