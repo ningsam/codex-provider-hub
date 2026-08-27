@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
 import { CardShell } from "../components/CardShell";
+import { useI18n } from "../i18n";
 import { api, REFRESH_MS } from "../lib/api";
 import type { GatewayStatus } from "../types";
 
 export function GatewayCard() {
+  const { t } = useI18n();
   const [status, setStatus] = useState<GatewayStatus | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -44,8 +46,8 @@ export function GatewayCard() {
   return (
     <CardShell
       index="01"
-      title="本地网关"
-      subtitle="127.0.0.1:18080 · Docker Sub2API"
+      title={t("gateway.title")}
+      subtitle={t("gateway.subtitle")}
       refreshedAt={status?.lastCheckedAt}
       onRefresh={() => void refresh()}
       refreshing={busy}
@@ -56,36 +58,36 @@ export function GatewayCard() {
           onClick={() => void toggle()}
           disabled={busy || !status}
         >
-          {running ? "Stop" : "Start"}
+          {running ? t("gateway.stop") : t("gateway.start")}
         </button>
       }
     >
       {error ? <p className="error-line">{error}</p> : null}
       <div className="metric-row">
         <div>
-          <div className="metric-label">状态</div>
+          <div className="metric-label">{t("gateway.status")}</div>
           <div className={`metric-value status ${running ? "is-on" : "is-off"}`}>
-            {running ? "running" : "stopped"}
+            {running ? t("common.running") : t("common.stopped")}
           </div>
         </div>
         <div>
-          <div className="metric-label">健康</div>
+          <div className="metric-label">{t("gateway.health")}</div>
           <div className="metric-value">
-            {status ? (status.healthy ? "healthy" : "unhealthy") : "—"}
+            {status ? (status.healthy ? t("common.healthy") : t("common.unhealthy")) : "—"}
           </div>
         </div>
       </div>
       <dl className="kv-grid">
         <div>
-          <dt>端口</dt>
+          <dt>{t("gateway.port")}</dt>
           <dd className="mono">{status?.port ?? "—"}</dd>
         </div>
         <div>
-          <dt>供应商</dt>
+          <dt>{t("gateway.providers")}</dt>
           <dd className="mono">{status?.providerCount ?? "—"}</dd>
         </div>
         <div>
-          <dt>模型路由</dt>
+          <dt>{t("gateway.routes")}</dt>
           <dd className="mono">{status?.modelCount ?? "—"}</dd>
         </div>
       </dl>

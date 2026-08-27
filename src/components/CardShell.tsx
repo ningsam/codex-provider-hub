@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { formatRelativeRefresh } from "../lib/format";
+import { formatRelativeTime, useI18n } from "../i18n";
 
 function RefreshIcon({ spinning = false }: { spinning?: boolean }) {
   return (
@@ -35,9 +35,7 @@ export function CardShell({
 }: {
   title: string;
   subtitle?: string;
-  /** Optional section index, e.g. "01" */
   index?: string;
-  /** Optional status chip rendered beside the title */
   titleBadge?: ReactNode;
   refreshedAt?: string | null;
   onRefresh?: () => void;
@@ -46,6 +44,8 @@ export function CardShell({
   children: ReactNode;
   className?: string;
 }) {
+  const { locale, t } = useI18n();
+
   return (
     <section className={`dash-card ${className}`.trim()}>
       <span className="card-specular" aria-hidden />
@@ -79,10 +79,10 @@ export function CardShell({
               className="btn ghost refresh-btn"
               onClick={onRefresh}
               disabled={refreshing}
-              aria-label={`刷新${title}`}
+              aria-label={t("common.refreshAria", { title })}
             >
               <RefreshIcon spinning={refreshing} />
-              <span>{refreshing ? "刷新中" : "刷新"}</span>
+              <span>{refreshing ? t("common.refreshing") : t("common.refresh")}</span>
             </button>
           ) : null}
         </div>
@@ -94,7 +94,11 @@ export function CardShell({
         <span className="card-foot-status" aria-hidden>
           <span />
         </span>
-        <span>Updated {formatRelativeRefresh(refreshedAt)}</span>
+        <span>
+          {t("common.updated", {
+            time: formatRelativeTime(refreshedAt, locale, t),
+          })}
+        </span>
       </footer>
     </section>
   );

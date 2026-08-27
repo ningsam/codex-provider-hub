@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { AihubCard } from "./cards/AihubCard";
 import { CursorPoolCard } from "./cards/CursorPoolCard";
@@ -6,6 +6,7 @@ import { GatewayCard } from "./cards/GatewayCard";
 import { PickerGuardCard } from "./cards/PickerGuardCard";
 import { ProvidersCard } from "./cards/ProvidersCard";
 import { Sub2ApiCard } from "./cards/Sub2ApiCard";
+import { localeOptions, useI18n, type TranslationKey } from "./i18n";
 import "./App.css";
 
 type Theme = "dark" | "light";
@@ -133,17 +134,38 @@ function Glyph({ name, size = 18 }: { name: GlyphName; size?: number }) {
   }
 }
 
-const navigation = [
-  { id: "overview", label: "状态", meta: "Overview", icon: "overview" as const },
-  { id: "usage", label: "额度", meta: "Usage", icon: "usage" as const },
-  { id: "providers", label: "供应商", meta: "Routes", icon: "providers" as const },
-  { id: "accounts", label: "账号池", meta: "Accounts", icon: "accounts" as const },
+const navigation: Array<{
+  id: string;
+  labelKey: TranslationKey;
+  metaKey: TranslationKey;
+  icon: GlyphName;
+}> = [
+  { id: "overview", labelKey: "nav.status", metaKey: "nav.overview", icon: "overview" },
+  { id: "usage", labelKey: "nav.usage", metaKey: "nav.usage", icon: "usage" },
+  { id: "providers", labelKey: "nav.providers", metaKey: "nav.routes", icon: "providers" },
+  { id: "accounts", labelKey: "nav.accounts", metaKey: "nav.accounts", icon: "accounts" },
 ];
 
-const principles = [
-  { icon: "shield" as const, label: "Local first", value: "凭据留在本机" },
-  { icon: "route" as const, label: "One route", value: "统一模型入口" },
-  { icon: "refresh" as const, label: "Live state", value: "持续刷新状态" },
+const principles: Array<{
+  icon: GlyphName;
+  labelKey: TranslationKey;
+  valueKey: TranslationKey;
+}> = [
+  {
+    icon: "shield",
+    labelKey: "principles.localFirst",
+    valueKey: "principles.localFirstValue",
+  },
+  {
+    icon: "route",
+    labelKey: "principles.oneRoute",
+    valueKey: "principles.oneRouteValue",
+  },
+  {
+    icon: "refresh",
+    labelKey: "principles.liveState",
+    valueKey: "principles.liveStateValue",
+  },
 ];
 
 function initialTheme(): Theme {
@@ -153,8 +175,19 @@ function initialTheme(): Theme {
 }
 
 export default function App() {
+  const { locale, setLocale, t } = useI18n();
   const [theme, setTheme] = useState<Theme>(initialTheme);
   const [activeSection, setActiveSection] = useState("overview");
+
+  const localizedNavigation = useMemo(
+    () =>
+      navigation.map((item) => ({
+        ...item,
+        label: t(item.labelKey),
+        meta: t(item.metaKey),
+      })),
+    [t],
+  );
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
@@ -199,7 +232,7 @@ export default function App() {
         <span className="frame-refraction" aria-hidden />
 
         <header className="topbar" data-tauri-drag-region>
-          <a className="brand-lockup" href="#overview" aria-label="Codex Provider Hub 首页">
+          <a className="brand-lockup" href="#overview" aria-label={t("app.home")}>
             <span className="brand-mark" aria-hidden>
               <span className="brand-mark-glow" />
               <span className="brand-mark-core">C</span>
@@ -210,22 +243,36 @@ export default function App() {
             </span>
           </a>
 
-          <div className="topbar-status" aria-label="工作区状态">
+          <div className="topbar-status" aria-label={t("app.workspaceStatus")}>
             <span className="live-chip">
               <span className="live-dot" aria-hidden />
-              Live workspace
+              {t("app.liveWorkspace")}
             </span>
             <span className="topbar-separator" aria-hidden />
-            <span className="topbar-caption">Private · On device</span>
+            <span className="topbar-caption">{t("app.privateOnDevice")}</span>
           </div>
 
           <div className="window-actions">
+            <div className="language-switcher" aria-label={t("language.label")}>
+              {localeOptions.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  className={`language-action ${locale === option.value ? "is-active" : ""}`}
+                  onClick={() => setLocale(option.value)}
+                  aria-label={t(option.labelKey)}
+                  title={t(option.labelKey)}
+                >
+                  {option.short}
+                </button>
+              ))}
+            </div>
             <button
               type="button"
               className="window-action"
               onClick={() => setTheme((value) => (value === "dark" ? "light" : "dark"))}
-              aria-label={theme === "dark" ? "切换到浅色主题" : "切换到深色主题"}
-              title={theme === "dark" ? "浅色主题" : "深色主题"}
+              aria-label={theme === "dark" ? t("app.switchLight") : t("app.switchDark")}
+              title={theme === "dark" ? t("app.lightTheme") : t("app.darkTheme")}
             >
               <Glyph name={theme === "dark" ? "sun" : "moon"} size={16} />
             </button>
@@ -233,8 +280,8 @@ export default function App() {
               type="button"
               className="window-action"
               onClick={hideWindow}
-              aria-label="隐藏控制台"
-              title="隐藏"
+              aria-label={t("app.hideConsole")}
+              title={t("app.hide")}
             >
               <Glyph name="hide" size={16} />
             </button>
@@ -242,10 +289,10 @@ export default function App() {
         </header>
 
         <div className="workspace">
-          <aside className="sidebar" aria-label="页面导航">
-            <p className="sidebar-label">Workspace</p>
+          <aside className="sidebar" aria-label={t("app.navigation")}>
+            <p className="sidebar-label">{t("app.workspace")}</p>
             <nav className="sidebar-nav">
-              {navigation.map((item, index) => (
+              {localizedNavigation.map((item, index) => (
                 <a
                   className={`nav-item ${activeSection === item.id ? "is-active" : ""}`}
                   href={`#${item.id}`}
@@ -269,7 +316,7 @@ export default function App() {
                 <Glyph name="command" size={16} />
               </span>
               <div>
-                <strong>Local runtime</strong>
+                <strong>{t("app.localRuntime")}</strong>
                 <span>127.0.0.1:18080</span>
               </div>
             </div>
@@ -280,16 +327,14 @@ export default function App() {
               <div className="command-copy">
                 <p className="command-kicker">
                   <span aria-hidden />
-                  Codex infrastructure
+                  {t("hero.kicker")}
                 </p>
                 <h1 id="page-title">
-                  每一条模型路由，
-                  <span>都清晰可见。</span>
+                  {t("hero.line1")}
+                  <span>{t("hero.line2")}</span>
                 </h1>
-                <p>
-                  在一个本地优先的控制台中管理网关、OAuth 号池、供应商和额度，不把敏感凭据交给云端面板。
-                </p>
-                <div className="command-tags" aria-label="核心特性">
+                <p>{t("hero.body")}</p>
+                <div className="command-tags" aria-label={t("hero.features")}>
                   <span>LOCAL ONLY</span>
                   <span>ENCRYPTED</span>
                   <span>AUTO REFRESH</span>
@@ -309,15 +354,15 @@ export default function App() {
               </div>
             </section>
 
-            <section className="principle-strip" aria-label="工作区原则">
+            <section className="principle-strip" aria-label={t("principles.label")}>
               {principles.map((item) => (
-                <article className="principle-item" key={item.label}>
+                <article className="principle-item" key={item.labelKey}>
                   <span className="principle-icon">
                     <Glyph name={item.icon} size={17} />
                   </span>
                   <span>
-                    <strong>{item.label}</strong>
-                    <small>{item.value}</small>
+                    <strong>{t(item.labelKey)}</strong>
+                    <small>{t(item.valueKey)}</small>
                   </span>
                 </article>
               ))}

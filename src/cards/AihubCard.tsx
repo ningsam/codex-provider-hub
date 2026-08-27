@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { CardShell } from "../components/CardShell";
 import { ProgressBar } from "../components/ProgressBar";
+import { useI18n } from "../i18n";
 import { api, REFRESH_MS } from "../lib/api";
 import type { AihubBalance } from "../types";
 
 export function AihubCard() {
+  const { t } = useI18n();
   const [data, setData] = useState<AihubBalance | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -24,7 +26,6 @@ export function AihubCard() {
   }, []);
 
   useEffect(() => {
-    // Stagger first fetch slightly so cards don't stampede.
     const boot = window.setTimeout(() => void refresh(), 400);
     const id = window.setInterval(() => void refresh(), REFRESH_MS.aihub);
     return () => {
@@ -38,8 +39,8 @@ export function AihubCard() {
     setBusy(true);
     setError(null);
     try {
-      const bal = await api.setAihubApiKey(apiKey);
-      setData(bal);
+      const balance = await api.setAihubApiKey(apiKey);
+      setData(balance);
       setApiKey("");
       setShowKeyForm(false);
     } catch (err) {
@@ -50,9 +51,7 @@ export function AihubCard() {
   };
 
   const onClearKey = async () => {
-    if (!window.confirm("清除本地保存的 AIHub Key？将回退到 Sub2API / 环境变量。")) {
-      return;
-    }
+    if (!window.confirm(t("aihub.clearConfirm"))) return;
     setBusy(true);
     setError(null);
     try {
@@ -70,8 +69,8 @@ export function AihubCard() {
 
   return (
     <CardShell
-      title="中转站 AIHub"
-      subtitle="Relay station wallet"
+      title={t("aihub.title")}
+      subtitle={t("aihub.subtitle")}
       refreshedAt={data?.fetchedAt}
       onRefresh={() => void refresh()}
       refreshing={busy}
@@ -81,9 +80,9 @@ export function AihubCard() {
             type="button"
             className="btn ghost"
             disabled={busy}
-            onClick={() => setShowKeyForm((v) => !v)}
+            onClick={() => setShowKeyForm((value) => !value)}
           >
-            {showKeyForm ? "取消" : "设置 Key"}
+            {showKeyForm ? t("common.cancel") : t("aihub.setKey")}
           </button>
           {data?.hasStoredKey ? (
             <button
@@ -92,7 +91,7 @@ export function AihubCard() {
               disabled={busy}
               onClick={() => void onClearKey()}
             >
-              清除 Key
+              {t("aihub.clearKey")}
             </button>
           ) : null}
         </>
@@ -101,13 +100,13 @@ export function AihubCard() {
       {error ? <p className="error-line">{error}</p> : null}
 
       {showKeyForm ? (
-        <form className="provider-form" onSubmit={(e) => void onSaveKey(e)}>
+        <form className="provider-form" onSubmit={(event) => void onSaveKey(event)}>
           <label>
-            AIHub API Key
+            {t("aihub.apiKey")}
             <input
               type="password"
               value={apiKey}
-              onChange={(e) => setApiKey(e.target.value)}
+              onChange={(event) => setApiKey(event.target.value)}
               placeholder="sk-…"
               required
               autoComplete="off"
@@ -116,16 +115,16 @@ export function AihubCard() {
           </label>
           <div className="form-actions">
             <button type="submit" className="btn primary" disabled={busy || !apiKey.trim()}>
-              保存并验证
+              {t("aihub.saveValidate")}
             </button>
           </div>
-          <p className="form-note">Key 加密写入本机 app data；默认也会尝试从 Sub2API AIHub 账号同步。</p>
+          <p className="form-note">{t("aihub.keyNote")}</p>
         </form>
       ) : null}
 
       <div className="metric-row">
         <div>
-          <div className="metric-label">余额</div>
+          <div className="metric-label">{t("aihub.balance")}</div>
           <div className="metric-value">
             {data ? (
               <>
@@ -138,17 +137,15 @@ export function AihubCard() {
           </div>
         </div>
         <div>
-          <div className="metric-label">今日已用</div>
-          <div className="metric-value mono">
-            {data ? data.used.toFixed(2) : "—"}
-          </div>
+          <div className="metric-label">{t("aihub.usedToday")}</div>
+          <div className="metric-value mono">{data ? data.used.toFixed(2) : "—"}</div>
         </div>
       </div>
       {data ? (
-        <ProgressBar value={remainingPct} invertTone label="余额占比（余额 / 余额+今日）" />
+        <ProgressBar value={remainingPct} invertTone label={t("aihub.balanceRatio")} />
       ) : null}
       {data?.keySource ? (
-        <p className="muted-line mono">源: {data.keySource}</p>
+        <p className="muted-line mono">{t("aihub.source", { source: data.keySource })}</p>
       ) : null}
     </CardShell>
   );
