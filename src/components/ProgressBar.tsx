@@ -32,11 +32,19 @@ export function ProgressBar({
       {label ? (
         <div className="progress-meta">
           <span>{label}</span>
-          <span className="mono">{pct.toFixed(1)}%</span>
+          <span className="progress-percent mono">{pct.toFixed(1)}%</span>
         </div>
       ) : null}
-      <div className="progress-track" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}>
-        <div className={`progress-fill tone-${tone}`} style={{ width: `${pct}%` }} />
+      <div
+        className="progress-track"
+        role="progressbar"
+        aria-valuenow={pct}
+        aria-valuemin={0}
+        aria-valuemax={100}
+      >
+        <div className={`progress-fill tone-${tone}`} style={{ width: `${pct}%` }}>
+          <span className="progress-glint" aria-hidden />
+        </div>
       </div>
     </div>
   );
