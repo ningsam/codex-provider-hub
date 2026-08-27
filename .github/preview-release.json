@@ -1,0 +1,8 @@
+{
+  "version": "0.1.0",
+  "channel": "preview",
+  "sourceCommit": "e2052dacc302d3b4226f1c1cd719ca637c6ec313",
+  "architectures": ["aarch64-apple-darwin", "x86_64-apple-darwin"],
+  "signing": "ad-hoc",
+  "checksums": "SHA-256"
+}
