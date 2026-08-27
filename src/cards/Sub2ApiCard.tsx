@@ -3,6 +3,7 @@ import { open as chooseFile } from "@tauri-apps/plugin-dialog";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { CardShell } from "../components/CardShell";
 import { ProgressBar } from "../components/ProgressBar";
+import { useI18n } from "../i18n";
 import { api, REFRESH_MS } from "../lib/api";
 import { formatDuration } from "../lib/format";
 import type {
@@ -11,19 +12,6 @@ import type {
   Sub2ApiImportResult,
   Sub2ApiUsage,
 } from "../types";
-
-function statusLabel(status: string): string {
-  switch (status) {
-    case "ready":
-      return "可用";
-    case "error":
-      return "异常/封禁";
-    case "inactive":
-      return "停用";
-    default:
-      return status || "未知";
-  }
-}
 
 function AccountMiniCard({
   account,
@@ -34,12 +22,21 @@ function AccountMiniCard({
   busy: boolean;
   onDelete: (account: Sub2ApiAccountQuota) => void;
 }) {
+  const { t } = useI18n();
   const tone =
     account.status === "ready"
       ? "ok"
       : account.status === "error"
         ? "danger"
         : "warn";
+  const statusText =
+    account.status === "ready"
+      ? t("sub2api.ready")
+      : account.status === "error"
+        ? t("sub2api.errorStatus")
+        : account.status === "inactive"
+          ? t("sub2api.inactive")
+          : account.status || t("sub2api.unknown");
   const five = account.fiveHour?.remainingPercent;
   const seven = account.sevenDay?.remainingPercent;
 
@@ -52,7 +49,7 @@ function AccountMiniCard({
             <div className="account-mini-email mono">{account.email}</div>
           ) : null}
         </div>
-        <span className={`pill status-${tone}`}>{statusLabel(account.status)}</span>
+        <span className={`pill status-${tone}`}>{statusText}</span>
       </header>
 
       {account.errorMessage ? (
@@ -66,8 +63,11 @@ function AccountMiniCard({
             invertTone
             label={
               five == null
-                ? "5h · 无数据"
-                : `5h ${five.toFixed(0)}% · reset ${formatDuration(account.fiveHour?.resetAfterSeconds ?? 0)}`
+                ? `5h · ${t("sub2api.noData")}`
+                : t("sub2api.account5h", {
+                    percent: five.toFixed(0),
+                    reset: formatDuration(account.fiveHour?.resetAfterSeconds ?? 0),
+                  })
             }
           />
           <ProgressBar
@@ -75,13 +75,16 @@ function AccountMiniCard({
             invertTone
             label={
               seven == null
-                ? "7d · 无数据"
-                : `7d ${seven.toFixed(0)}% · reset ${formatDuration(account.sevenDay?.resetAfterSeconds ?? 0)}`
+                ? `7d · ${t("sub2api.noData")}`
+                : t("sub2api.account7d", {
+                    percent: seven.toFixed(0),
+                    reset: formatDuration(account.sevenDay?.resetAfterSeconds ?? 0),
+                  })
             }
           />
         </div>
       ) : (
-        <p className="muted-line">此账号无 5h/7d 额度窗口（可能已失效）</p>
+        <p className="muted-line">{t("sub2api.noWindow")}</p>
       )}
 
       <div className="account-mini-actions">
@@ -91,7 +94,7 @@ function AccountMiniCard({
           disabled={busy}
           onClick={() => onDelete(account)}
         >
-          删除
+          {t("common.delete")}
         </button>
       </div>
     </article>
@@ -99,6 +102,7 @@ function AccountMiniCard({
 }
 
 export function Sub2ApiCard() {
+  const { locale, t } = useI18n();
   const [data, setData] = useState<Sub2ApiUsage | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -166,9 +170,8 @@ export function Sub2ApiCard() {
           : [{ name: "Card export TXT", extensions: ["txt"] }],
     });
     if (!path || Array.isArray(path)) return;
-    const ok = window.confirm(
-      `确认导入本地文件「${path.split("/").pop() ?? path}」？\n凭据仅会传给本机 Sub2API，不会显示在 Hub 中。`,
-    );
+    const fileName = path.split(/[\\/]/).pop() ?? path;
+    const ok = window.confirm(t("sub2api.importConfirm", { name: fileName }));
     if (!ok) return;
     setBusy(true);
     setError(null);
@@ -213,9 +216,7 @@ export function Sub2ApiCard() {
 
   const onDelete = async (account: Sub2ApiAccountQuota) => {
     const label = account.email || account.name || `#${account.id}`;
-    const ok = window.confirm(
-      `确认从号池删除 OAuth 账号「${label}」？\n此操作不可恢复（不会删除 AIHub/AnyRouter）。`,
-    );
+    const ok = window.confirm(t("sub2api.deleteConfirm", { name: label }));
     if (!ok) return;
     setBusy(true);
     setError(null);
@@ -229,12 +230,13 @@ export function Sub2ApiCard() {
     }
   };
 
-  const errored = data?.accounts.filter((a) => a.status === "error").length ?? 0;
+  const errored = data?.accounts.filter((account) => account.status === "error").length ?? 0;
+  const accountSeparator = locale === "zh-CN" ? "、" : ", ";
 
   return (
     <CardShell
-      title="Sub2API 号池"
-      subtitle="仅 OpenAI/Codex OAuth 账号 · 中转站不计入"
+      title={t("sub2api.title")}
+      subtitle={t("sub2api.subtitle")}
       refreshedAt={data?.fetchedAt}
       onRefresh={() => void refresh()}
       refreshing={busy}
@@ -244,31 +246,52 @@ export function Sub2ApiCard() {
       <section className="account-mini-list">
         <div className="account-mini-head">
           <div>
-            <div className="account-mini-name">导入 OAuth 账号</div>
-            <div className="muted-line">仅 OpenAI/Codex；凭据只在本机处理</div>
+            <div className="account-mini-name">{t("sub2api.importTitle")}</div>
+            <div className="muted-line">{t("sub2api.importPrivate")}</div>
           </div>
         </div>
         <div className="account-mini-actions">
-          <button type="button" className="btn ghost" disabled={busy} onClick={() => void chooseImportFile("json")}>
-            导入 JSON
+          <button
+            type="button"
+            className="btn ghost"
+            disabled={busy}
+            onClick={() => void chooseImportFile("json")}
+          >
+            {t("sub2api.importJson")}
           </button>
-          <button type="button" className="btn ghost" disabled={busy} onClick={() => void chooseImportFile("txt")}>
-            导入 TXT
+          <button
+            type="button"
+            className="btn ghost"
+            disabled={busy}
+            onClick={() => void chooseImportFile("txt")}
+          >
+            {t("sub2api.importTxt")}
           </button>
-          <button type="button" className="btn" disabled={busy || browserLogin?.state === "waiting"} onClick={() => void startBrowserLogin()}>
-            浏览器登录 + 2FA
+          <button
+            type="button"
+            className="btn"
+            disabled={busy || browserLogin?.state === "waiting"}
+            onClick={() => void startBrowserLogin()}
+          >
+            {t("sub2api.browserLogin")}
           </button>
         </div>
         {browserLogin ? (
           <div className={browserLogin.state === "complete" ? "muted-line" : "error-line"}>
             <p>
               {browserLogin.message}
-              {browserLogin.importedAccounts.length ? ` ${browserLogin.importedAccounts.join("、")}` : ""}
+              {browserLogin.importedAccounts.length
+                ? ` ${browserLogin.importedAccounts.join(accountSeparator)}`
+                : ""}
             </p>
             {browserLogin.state === "waiting" ? (
               <div className="account-mini-actions">
-                <button type="button" className="btn ghost danger-text" onClick={() => void cancelBrowserLogin()}>
-                  取消
+                <button
+                  type="button"
+                  className="btn ghost danger-text"
+                  onClick={() => void cancelBrowserLogin()}
+                >
+                  {t("common.cancel")}
                 </button>
               </div>
             ) : null}
@@ -276,20 +299,26 @@ export function Sub2ApiCard() {
         ) : null}
         {importResult ? (
           <p className="muted-line">
-            {importResult.summary} 新增 {importResult.created} · 更新 {importResult.updated} · 跳过 {importResult.skipped} · 失败 {importResult.failed}
+            {t("sub2api.importSummary", {
+              summary: importResult.summary,
+              created: importResult.created,
+              updated: importResult.updated,
+              skipped: importResult.skipped,
+              failed: importResult.failed,
+            })}
           </p>
         ) : null}
       </section>
 
       <div className="metric-row">
         <div>
-          <div className="metric-label">可用 OAuth</div>
+          <div className="metric-label">{t("sub2api.available")}</div>
           <div className="metric-value mono">
             {data ? `${data.poolAvailable}/${data.poolTotal}` : "—"}
           </div>
         </div>
         <div>
-          <div className="metric-label">异常账号</div>
+          <div className="metric-label">{t("sub2api.errors")}</div>
           <div className={`metric-value mono ${errored > 0 ? "danger-text" : ""}`}>
             {data ? errored : "—"}
           </div>
@@ -302,14 +331,20 @@ export function Sub2ApiCard() {
             <ProgressBar
               value={data.fiveHour.remainingPercent}
               invertTone
-              label={`可用号平均 5h ${data.fiveHour.remainingPercent.toFixed(0)}% · reset ${formatDuration(data.fiveHour.resetAfterSeconds)}`}
+              label={t("sub2api.average5h", {
+                percent: data.fiveHour.remainingPercent.toFixed(0),
+                reset: formatDuration(data.fiveHour.resetAfterSeconds),
+              })}
             />
           ) : null}
           {data.sevenDay ? (
             <ProgressBar
               value={data.sevenDay.remainingPercent}
               invertTone
-              label={`可用号平均 7d ${data.sevenDay.remainingPercent.toFixed(0)}% · reset ${formatDuration(data.sevenDay.resetAfterSeconds)}`}
+              label={t("sub2api.average7d", {
+                percent: data.sevenDay.remainingPercent.toFixed(0),
+                reset: formatDuration(data.sevenDay.resetAfterSeconds),
+              })}
             />
           ) : null}
         </div>
@@ -317,16 +352,16 @@ export function Sub2ApiCard() {
 
       <div className="account-mini-list">
         {data?.accounts.length ? (
-          data.accounts.map((a) => (
+          data.accounts.map((account) => (
             <AccountMiniCard
-              key={a.id}
-              account={a}
+              key={account.id}
+              account={account}
               busy={busy}
-              onDelete={(acc) => void onDelete(acc)}
+              onDelete={(item) => void onDelete(item)}
             />
           ))
         ) : data ? (
-          <p className="muted-line">没有 OAuth/GPT 号池账号（AIHub/AnyRouter 等中转站请看「供应商」卡）</p>
+          <p className="muted-line">{t("sub2api.noAccounts")}</p>
         ) : null}
       </div>
     </CardShell>
