@@ -23,6 +23,26 @@ export interface ProviderConfig {
   updatedAt: string;
 }
 
+export type RoutingTargetKind = "official" | "pool" | "oauth" | "provider";
+
+export interface RoutingTarget {
+  id: string;
+  kind: RoutingTargetKind;
+  accountId: number | null;
+  name: string;
+  detail: string;
+  available: boolean;
+  selected: boolean;
+}
+
+export interface RoutingState {
+  activeTarget: string;
+  modelProvider: string;
+  targets: RoutingTarget[];
+  gatewayError: string | null;
+  updatedAt: string;
+}
+
 export interface QuotaWindow {
   remainingPercent: number;
   resetAfterSeconds: number;
