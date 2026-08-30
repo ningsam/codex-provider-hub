@@ -83,7 +83,7 @@ fn position_window_below_tray(app: &tauri::AppHandle, tray: Option<&TrayIcon>) {
                 22.0 * scale,
             )
         } else {
-            (100.0, 24.0, 22.0 * scale, 22.0 * scale)
+            (100.0, 24.0, 22.0, 22.0)
         }
     });
 
