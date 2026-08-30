@@ -7,6 +7,7 @@ mod gateway;
 mod http_util;
 mod picker_guard;
 mod providers;
+mod routing;
 mod sub2api;
 
 use parking_lot::Mutex;
@@ -267,6 +268,8 @@ pub fn run() {
             gateway::stop_gateway,
             gateway::get_provider_config,
             gateway::save_provider_config,
+            routing::get_routing_state,
+            routing::switch_routing_target,
             sub2api::get_sub2api_usage,
             sub2api::delete_sub2api_account,
             sub2api::import_sub2api_file,
