@@ -8,6 +8,7 @@ import type {
   ProviderConfig,
   ProviderInfo,
   ProviderMutationResult,
+  RoutingState,
   Sub2ApiBrowserLoginStatus,
   Sub2ApiImportResult,
   Sub2ApiUsage,
@@ -20,6 +21,10 @@ export const api = {
   getProviderConfig: () => invoke<ProviderConfig>("get_provider_config"),
   saveProviderConfig: (cfg: ProviderConfig) =>
     invoke<ProviderConfig>("save_provider_config", { cfg }),
+
+  getRoutingState: () => invoke<RoutingState>("get_routing_state"),
+  switchRoutingTarget: (targetId: string) =>
+    invoke<RoutingState>("switch_routing_target", { targetId }),
 
   getSub2apiUsage: () => invoke<Sub2ApiUsage>("get_sub2api_usage"),
   deleteSub2apiAccount: (accountId: number) =>
